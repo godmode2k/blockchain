@@ -9,7 +9,7 @@ Summary
 >
 > This is a test version. so, USE AT YOUR OWN RISK.
 
-Source article:
+    Source article:
     (Python version)
     http://www.righto.com/2014/02/bitcoins-hard-way-using-raw-bitcoin.html
 
