@@ -23,6 +23,7 @@
 #include <pem.h>
 #include <hex.h>
 #include <crypto++/base64.h>
+#include <crypto++/gzip.h>
 
 
 using namespace CryptoPP;
@@ -109,11 +110,15 @@ void pem_test(void) {
 
 	RSAES_OAEP_SHA_Encryptor e(pubkey);
 	RSAES_OAEP_SHA_Decryptor d(privkey);
-	std::string encrypted, decrypted, base64, hex;
+	std::string encrypted, decrypted, base64, hex, compressed, decompressed;
+
+	// Gzip
+	StringSource(plain, true,
+			new Gzip(new StringSink(compressed)));
 
 	// Encryption
 	//StringSource ss1(plain, true,
-	StringSource(plain, true,
+	StringSource(compressed, true,
 			new PK_EncryptorFilter(rng, e,
 			new StringSink(encrypted)
 		) // PK_EncryptorFilter
@@ -128,12 +133,30 @@ void pem_test(void) {
 	StringSource(encrypted, true,
 			new HexEncoder(new StringSink(hex)));
 
-	// base64 decode
+
+	std::cout << "Plain/text:\n" << plain << "\n" << std::endl;
+	std::cout << "Compressed (gzip):\n" << compressed << "\n" << std::endl;
+	std::cout << "Encrypted (gzip):\n" << encrypted << "\n" << std::endl;
+	std::cout << "Encrypted (gzip: hex):\n" << hex << "\n" << std::endl;
+	std::cout << "Encrypted (gzip: base64):\n" << base64 << "\n" << std::endl;
+	std::cout << "\n\n" << std::endl;
+
+
+	compressed = "";
+	decompressed = "";
 	encrypted = "";
+	decrypted = "";
+	hex = "";
+
+
+	// base64 decode
 	StringSource(base64, true,
 			new Base64Decoder(new StringSink(encrypted)));
+
 	StringSource(encrypted, true,
 			new HexEncoder(new StringSink(hex)));
+
+	std::cout << "Encrypted (gzip: hex):\n" << hex << "\n" << std::endl;
 	// ----------
 
 
@@ -145,14 +168,13 @@ void pem_test(void) {
 		) // PK_DecryptorFilter
 	); // StringSource
 
+	std::cout << "Decrypted (gzip):\n" << decrypted << "\n" << std::endl;
 
+	// Gunzip
+	StringSource(decrypted, true,
+			new Gunzip(new StringSink(decompressed)));
 
-
-	std::cout << "Plain/text:\n" << plain << "\n" << std::endl;
-	std::cout << "Encrypted:\n" << encrypted << "\n" << std::endl;
-	std::cout << "Encrypted (base64):\n" << base64 << "\n" << std::endl;
-	std::cout << "Encrypted (hex):\n" << hex << "\n" << std::endl;
-	std::cout << "Decrypted:\n" << decrypted << "\n" << std::endl;
+	std::cout << "Decompressed (gzip):\n" << decompressed << "\n" << std::endl;
 }
 
 
