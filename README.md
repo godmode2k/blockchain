@@ -67,3 +67,31 @@ OpenSSL AES-(128,256)-CBC encryption/decryption example
 
     SEE (how to use): void __test_aes(void) { ... }
 
+
+
+WinHTTP test
+----------
+>
+
+    // WinHTTP: GET/POST, SSL
+    util/winhttp_test.cpp
+
+
+
+Crypto++: AES-256-CBC test
+----------
+>
+
+    util/cryptopp-aes-cbc-test.cpp
+
+
+
+Crypto++: RSA PEM test
+----------
+>
+
+    crypto/rsa/crypto_test.cpp
+    crypto/rsa/test.php
+
+
+
