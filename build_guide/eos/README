@@ -1,0 +1,87 @@
+EOS build guide
+ - hjkim, 2019.05.14
+
+
+
+https://developers.eos.io/eosio-home/docs
+https://github.com/EOSIO/eos.git
+
+// EOS seed list
+https://eosnodes.privex.io/
+
+
+
+// --------------------------------------------------------------
+// Defaults
+// --------------------------------------------------------------
+eosio
+ - base path: $HOME/.local/share/eosio/
+ - config.ini: $HOME/.local/share/eosio/nodeos/config/config.ini
+ - data: $HOME/.local/share/eosio/nodeos/data/
+
+wallet
+ - base path: $HOME/eosio-wallet
+ - config.ini: $HOME/eosio-wallet/config.ini
+
+
+
+// --------------------------------------------------------------
+// Branch: master
+// --------------------------------------------------------------
+$ git clone https://github.com/EOSIO/eos.git
+$ cd ./eos
+$ git submodule update --init --recursive
+$ ./scripts/eosio_build.sh
+
+
+
+// --------------------------------------------------------------
+// Branch: latest release (v1.7.3)
+// --------------------------------------------------------------
+$ mkdir ./eos-v1.7.3 && cd ./eos-v1.7.3
+$ git clone -b v1.7.3 https://github.com/EOSIO/eos.git .
+$ git submodule update --init --recursive
+$ ./scripts/eosio_build.sh
+
+
+
+// --------------------------------------------------------------
+// Genesis info download
+// --------------------------------------------------------------
+$ wget https://eosnodes.privex.io/static/genesis.json
+
+
+
+// --------------------------------------------------------------
+// eos/scripts/eosio_build.sh
+// --------------------------------------------------------------
+// Minimum disk size
+#export DISK_MIN=20
+export DISK_MIN=0 # fake
+
+// BOOST C++ Library version error
+// Version check: https://dl.bintray.com/boostorg/release/
+// e.g., v1.67.0
+export BOOST_VERSION_MAJOR=1
+export BOOST_VERSION_MINOR=67
+export BOOST_VERSION_PATCH=0
+
+
+
+// --------------------------------------------------------------
+// config.ini: $HOME/.local/share/eosio/nodeos/config/config.ini
+// --------------------------------------------------------------
+# The public endpoint of a peer node to connect to. Use multiple p2p-peer-address options as needed to compose a network. (eosio::net_plugin)
+# p2p-peer-address = 
+p2p-peer-address = bp.antpool.com:443
+p2p-peer-address = fullnode.eoslaomao.com:443
+p2p-peer-address = mars.fnp2p.eosbixin.com:443
+p2p-peer-address = p2p.eos.bitspace.no:9876
+p2p-peer-address = p2p.genereos.io:9876
+p2p-peer-address = peer.eosn.io:9876
+p2p-peer-address = peer.main.alohaeos.com:9876
+p2p-peer-address = peering.mainnet.eoscanada.com:9876 # Montreal, Canada
+p2p-peer-address = publicnode.cypherglass.com:9876
+
+
+
