@@ -15,6 +15,8 @@ DATA_DIR="--data-dir $BASE_DIR/keosd"
 CONFIG_DIR="--config-dir $BASE_DIR/keosd"
 # Doesn't work
 WALLET_DIR="--wallet-dir $BASE_DIR/keosd"
+LISTEN_IP_PORT="127.0.0.1:8889"
+LISTEN_HTTP="--http-server-address $LISTEN_IP_PORT"
 #
 #NODEOS_URL="-u http://127.0.0.1:8888"
 #WALLET_URL="--wallet-url unix:////$BASE_DIR/keosd/keosd.sock"
@@ -28,16 +30,25 @@ WALLET_DIR="--wallet-dir $BASE_DIR/keosd"
 
 ### MAINNET ###
 echo "### MAINNET ###"
-echo "$BIN $DATA_DIR $CONFIG_DIR $WALLET_DIR"
-$BIN $DATA_DIR $CONFIG_DIR $WALLET_DIR
+echo "$BIN $DATA_DIR $CONFIG_DIR $WALLET_DIR $LISTEN_HTTP"
+$BIN $DATA_DIR $CONFIG_DIR $WALLET_DIR $LISTEN_HTTP
 
 
+# Unix Domain Socket
 # $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url unix:////data/data/eosio_mainnet/sync_data/mainnet/keosd/keosd.sock [Subcommands]
+#
+# HTTP
+# $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 [Subcommands]
+#
+#
 # Creates wallet
 # $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url unix:////data/data/eosio_mainnet/sync_data/mainnet/keosd/keosd.sock wallet create --to-console
+# $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet create --to-console
 # Use wallet
 # $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url unix:////data/data/eosio_mainnet/sync_data/mainnet/keosd/keosd.sock wallet open # default
 # $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url unix:////data/data/eosio_mainnet/sync_data/mainnet/keosd/keosd.sock wallet open -n <wallet name>
+# $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet open # default
+# $ /data/data/eosio_mainnet/sync_data/cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet open -n <wallet name>
 #
 # e.g.,
 # -----------------------------------
@@ -175,9 +186,45 @@ $BIN $DATA_DIR $CONFIG_DIR $WALLET_DIR
 # Contract: https://github.com/EOSIO/eos/tree/master/unittests/contracts/eosio.token
 # -----------------------------------
 # $ cleos create account <eosio> <eosio.token> <EOS...> <EOS...>
-# $ mkdir contracts
+# $ mkdir contracts && cd contracts && cp -a -r /path/to/eos/build/unittests/contracts/eosio.token .
+#
 # $ cleos set contract eosio.token ./contracts/eosio.token
+# Reading WASM from /path/to/eos/build/unittests/contracts/eosio.token/eosio.token.wasm...
+# Publishing contract...
+# executed transaction: ...   ??? bytes  ??? us
+# #         eosio <= eosio::setcode               {"account":"eosio.token","vmtype":0,"vmversion":0,"code":"...
+# #         eosio <= eosio::setabi                {"account":"eosio.token","abi":"...
+# warning: transaction executed locally, but may not be confirmed by the network yet         ]
+#
 # $ cleos push action eosio.token create '[eosio, "10000000000.0000 EOS"]' -p eosio.token
-# $ cleos push action eosio.token issue '[eosio, "1000000000.0000 EOS"]' -p eosio
-# $ cleos push action eosio.token transfer '["eosio", "to_account", "1.0000 EOS", "test_message"]' -p eosio
+# executed transaction: ...   ??? bytes  ??? us
+# #  eosio.token <= eosio.token::create         {"issuer":"eosio","maximum_supply":"10000000000.0000 EOS"}
+# warning: transaction executed locally, but may not be confirmed by the network yet         ]
+#
+# $ cleos push action eosio.token issue '[eosio, "1000000000.0000 EOS", "test_memo"]' -p eosio
+# executed transaction: 55b1c549cc695813c2ddceab337de655962b2cc5c09abf9b812c874a6757c5ed  128 bytes  562 us
+# #  eosio.token <= eosio.token::issue          {"to":"eosio","quantity":"1000000000.0000 EOS","memo":"test_memo"}
+# warning: transaction executed locally, but may not be confirmed by the network yet         ]
+#
 # $ cleos get currency balance eosio.token eosio EOS
+# 1000000000.0000 EOS
+#
+# $ cleos push action eosio.token transfer '["eosio", "<to_account>", "1.0000 EOS", "test_message"]' -p eosio
+# executed transaction: ...   ??? bytes  ??? us
+# #  eosio.token <= eosio.token::transfer       {"from":"eosio","to":"<to_account>","quantity":"1.0000 EOS","memo":"test_message"}
+# #         eosio <= eosio.token::transfer       {"from":"eosio","to":"<to_account>","quantity":"1.0000 EOS","memo":"test_message"}
+# #  <to_account> <= eosio.token::transfer       {"from":"eosio","to":"<to_account>","quantity":"1.0000 EOS","memo":"test_message"}
+# warning: transaction executed locally, but may not be confirmed by the network yet         ]
+#
+# $ cleos get currency balance eosio.token <to_account> EOS
+# 1.0000 EOS
+#
+# $ cleos get currency stats eosio.token EOS
+# {
+#   "EOS": {
+#     "supply": "1000000000.0000 EOS",
+#     "max_supply": "10000000000.0000 EOS",
+#     "issuer": "eosio"
+#   }
+# }
+#
