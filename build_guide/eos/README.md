@@ -300,8 +300,38 @@ Testnet (local)
 #
 #
 # -----------------------------------
+# Contract
+#  - System (eosio.system)
+#  - Contract: https://github.com/EOSIO/eos/tree/master/unittests/contracts/eosio.system
+#
+# Error:
+# eading WASM from ./contracts/eosio.system/eosio.system.wasm...
+# Publishing contract...
+# Error 3080006: Transaction took too long
+# Error Details:
+# deadline exceeded
+#
+# USE '$ nodeos --max-transaction-time=1000 --resync' then retry
+# or
+# retry with option '-x' for max transaction time
+# ./cleos set contract eosio ./contracts/eosio.system/ -x 1000
+# -----------------------------------
+# $ mkdir contracts && cd contracts && cp -a -r /path/to/eos/build/unittests/contracts/eosio.system .
+#
+# ./cleos set contract eosio ./contracts/eosio.system/
+# Reading WASM from ./contracts/eosio.system/eosio.system.wasm...
+# Publishing contract...
+# executed transaction: dda74f0a242ea879104fbd2dd100f12521fb5f49046fda1f2a8f8b39bfaeff62  66920 bytes  8464 us
+# #         eosio <= eosio::setcode               {"account":"eosio","vmtype":0,"vmversion":0,"code":"0061736d01000000018a033960027f7f0060057f7f7f7f7f...
+# #         eosio <= eosio::setabi                {"account":"eosio","abi":"0e656f73696f3a3a6162692f312e30004c086162695f686173680002056f776e6572046e61...
+# >> WGM : 1
+# warning: transaction executed locally, but may not be confirmed by the network yet         ]
+#
+#
+# -----------------------------------
 # Smart contract
 # Contract: https://github.com/EOSIO/eos/tree/master/unittests/contracts/eosio.token
+#  - Creates Token and Transfer
 # -----------------------------------
 # $ cleos create account <eosio> <eosio.token> <EOS...> <EOS...>
 # $ mkdir contracts && cd contracts && cp -a -r /path/to/eos/build/unittests/contracts/eosio.token .
