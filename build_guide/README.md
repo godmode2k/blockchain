@@ -145,6 +145,71 @@ listen=1
 
 
 
+DASH (DSH)
+----------
+    https://github.com/dashpay/dash
+
+    download: released dash-0.13.3.0
+
+```sh
+path: /nodes/dsh_mainnet/dash-0.13.3.0
+
+// dependencies
+sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev
+sudo apt-get install libboost-all-dev
+sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+sudo apt-get install libqrencode-dev autoconf openssl libssl-dev libevent-dev
+sudo apt-get install libminiupnpc-dev
+sudo apt-get install cmake
+
+// db4
+$ mkdir db4 && cd db4
+$ wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
+$ tar xzvf db-4.8.30.NC.tar.gz && cd db-4.8.30.NC/build_unix
+$ ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=/nodes/dsh_mainnet/dash-0.13.3.0/db4/
+$ make install
+$ cd ../../../
+
+// bls-signatures
+$ wget https://github.com/codablock/bls-signatures/archive/v20181101.tar.gz
+$ mv v20181101.tar.gz bls-signatures-v20181101.tar.gz
+$ tar xzvf bls-signatures-v20181101.tar.gz
+$ cd bls-signatures-20181101
+$ cmake .
+$ make
+$ cd ..
+
+// Depends
+$ cd depends
+$ make -s -j6
+$ cd ..
+
+$ ./autogen.sh
+$ ./configure LDFLAGS="-L/nodes/dsh_mainnet/dash-0.13.3.0/db4/lib/ -L/nodes/dsh_mainnet/dash-0.13.3.0/bls-signatures-20181101/ -L/nodes/dsh_mainnet/dash-0.13.3.0/depends/x86_64-pc-linux-gnu/lib/" CPPFLAGS="-I/nodes/dsh_mainnet/dash-0.13.3.0/db4/include/ -I/nodes/dsh_mainnet/dash-0.13.3.0/depends/x86_64-pc-linux-gnu/include/" --with-boost-libdir=/nodes/dsh_mainnet/dash-0.13.3.0/depends/x86_64-pc-linux-gnu/lib/ --without-gui
+$ make -s -j6
+
+
+[dash.conf]
+rpcuser=
+rpcpassword=
+rpcport=29080
+#rpcallowip=192.168.0.0/24
+rpcallowip=127.0.0.1
+#addnode=
+server=1
+daemon=1
+listen=1
+
+
+// Run node
+/nodes/dsh_mainnet# ./dashd -daemon -datadir=/nodes/dsh_mainnet/sync_data
+
+// Client
+/nodes/dsh_mainnet# ./dash-cli -datadir=/nodes/dsh_mainnet/sync_data
+```
+
+
+
 QTUM (QTUM)
 ----------
     https://github.com/qtumproject/qtum
