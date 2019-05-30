@@ -10,5 +10,5 @@ define( "RPC_HOST", "127.0.0.1" );
 // test
 define( "RPC_PORT", "8888" );
 define( "RPC_PORT_WALLET", "8889" );
-define( "WPASSPHRASE", "<wallet passphease>" );
+define( "WPASSPHRASE", "<wallet passphrase>" );
 ?>
