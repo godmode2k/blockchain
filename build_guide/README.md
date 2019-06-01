@@ -353,9 +353,9 @@ $ cmake ..
 $ cmake --build .
 
 
-$ ln -s ./rippled-1.2.1/my_build/rippled .
-$ cp rippled-1.2.1/cfg/rippled-example.cfg ./xrp_mainnet/rippled.cfg
-$ cp rippled-1.2.1/cfg/validators-example.txt ./xrp_mainnet/validators.txt
+$ ln -s ./rippled-1.2.1/my_build/rippled /nodes/xrp_mainnet
+$ cp rippled-1.2.1/cfg/rippled-example.cfg /nodes/xrp_mainnet/sync_data/rippled.cfg
+$ cp rippled-1.2.1/cfg/validators-example.txt /nodes/xrp_mainnet/sync_data/validators.txt
 
 
 // rippled.cfg
