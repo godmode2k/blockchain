@@ -307,3 +307,88 @@ algo=groestl
 // USE bitcoin-cli or web interface
 ```
 
+
+
+Ripple (XRP)
+----------
+    https://github.com/ripple/rippled
+
+```sh
+path: /nodes/xrp_mainnet/rippled-1.2.1
+
+$ sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget
+
+
+// CMake
+$ wget https://github.com/Kitware/CMake/releases/download/v3.13.3/cmake-3.13.3-Linux-x86_64.sh
+$ sudo sh cmake-3.13.3-Linux-x86_64.sh --prefix=/usr/local --exclude-subdir
+
+or
+
+$ wget https://github.com/Kitware/CMake/releases/download/v3.14.4/cmake-3.14.4.tar.gz
+$ ./bootstrap
+$ make
+$ sudo make install
+
+
+// BOOST 1.67.0
+$ wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz
+$ tar xvzf boost_1_67_0.tar.gz
+$ cd boost_1_67_0
+$ ./bootstrap.sh
+$ ./b2 -j 4
+
+$ export BOOST_ROOT=$HOME/opt/boost
+$ export BOOST_LIBRARYDIR=$HOME/opt/boost/lib
+
+
+// Ripple (v1.2.1)
+$ git clone https://github.com/ripple/rippled.git
+$ cd rippled
+$ git checkout master
+
+$ mkdir my_build
+$ cd my_build
+$ cmake ..
+$ cmake --build .
+
+
+$ ln -s ./rippled-1.2.1/my_build/rippled .
+$ cp rippled-1.2.1/cfg/rippled-example.cfg ./xrp_mainnet/rippled.cfg
+$ cp rippled-1.2.1/cfg/validators-example.txt ./xrp_mainnet/validators.txt
+
+
+// rippled.cfg
+...
+[node_db]
+#path=/var/lib/rippled/db/rocksdb
+path=/nodes/xrp_mainnet/sync_data/db/rocksdb
+...
+[shard_db]
+type=NuDB
+#path=/var/lib/rippled/db/shards/nudb
+path=/nodes/xrp_mainnet/sync_data/db/shards/nudb
+max_size_gb=???
+...
+[database_path]
+#/var/lib/rippled/db
+/nodes/xrp_mainnet/sync_data/db
+...
+[debug_logfile]
+#/var/log/rippled/debug.log
+/nodes/xrp_mainnet/sync_data/debug.log
+...
+
+
+// Run node
+/nodes/xrp_mainnet# ./rippled --conf /nodes/xrp_mainnet/sync_data
+
+// Client
+/nodes/xrp_mainnet# ./rippled --conf /nodes/xrp_mainnet/sync_data
+
+
+// local testnet
+/nodes/xrp_mainnet# ./rippled --conf /nodes/xrp_mainnet/sync_data -a --start
+```
+
+

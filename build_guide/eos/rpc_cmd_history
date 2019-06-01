@@ -1,0 +1,175 @@
+
+// local testnet
+// RPC command history
+// - hjkim, 2019.05.13
+
+
+
+
+// ----------------------------------------------
+// creates wallet
+// ----------------------------------------------
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet create --to-console
+Creating wallet: default
+Save password to use in the future to unlock this wallet.
+Without password imported keys will not be retrievable.
+"..."
+
+
+
+// ----------------------------------------------
+// unlock wallet
+// ----------------------------------------------
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet unlock
+
+
+
+// ----------------------------------------------
+// creates keys (Owner, Active)
+// ----------------------------------------------
+// Keys for Owner
+./cleos create key --to-console
+Private key: 5K1RAhUSTJEhtPmhete7gUFX5oTL54hznHJvPKVWjgJnmCZxAbg
+Public key: EOS7dUqdb2mCHJ3GTgxAVFvfMnpXnAsvEJp2b4oT6wUim4Szq6KvU
+
+// Keys for Active
+./cleos create key --to-console
+Private key: 5JpD84SiA4RwTSPiLcFYqZAy3kJD2ykxvmD8K6vSpsDTUPXDmGB
+Public key: EOS6e4sSD5qyFK6TM1zLodub7wFrJXtthX2QP8eVQogc8Dy5bBmJ3
+
+
+
+// ----------------------------------------------
+// import keys
+// ----------------------------------------------
+// import private keys into wallet
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet import --private-key 5K1RAhUSTJEhtPmhete7gUFX5oTL54hznHJvPKVWjgJnmCZxAbg
+imported private key for: EOS7dUqdb2mCHJ3GTgxAVFvfMnpXnAsvEJp2b4oT6wUim4Szq6KvU
+
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet import --private-key 5JpD84SiA4RwTSPiLcFYqZAy3kJD2ykxvmD8K6vSpsDTUPXDmGB
+imported private key for: EOS6e4sSD5qyFK6TM1zLodub7wFrJXtthX2QP8eVQogc8Dy5bBmJ3
+
+
+
+// ----------------------------------------------
+// private key for eosio account (creator)
+// ----------------------------------------------
+// account: eosio
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet import --private-key 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+imported private key for: EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+
+
+
+// ----------------------------------------------
+// creates account
+// ----------------------------------------------
+// creates account
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 create account eosio testtestaaa1 EOS7dUqdb2mCHJ3GTgxAVFvfMnpXnAsvEJp2b4oT6wUim4Szq6KvU EOS6e4sSD5qyFK6TM1zLodub7wFrJXtthX2QP8eVQogc8Dy5bBmJ3
+executed transaction: 2e067e18db103bad26291b02940290d5ca2be9863b484c44b22660666776018f  200 bytes  243 us
+#         eosio <= eosio::newaccount            {"creator":"eosio","name":"testtestaaa1","owner":{"threshold":1,"keys":[{"key":"EOS7dUqdb2mCHJ3GTgxA...
+warning: transaction executed locally, but may not be confirmed by the network yet         ]
+
+
+
+/*
+// ----------------------------------------------
+// smart contract
+// eosio.system
+// ----------------------------------------------
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 set contract eosio /data/data/eosio_mainnet/eos/build/unittests/contracts/eosio.system/ -x 1000
+Reading WASM from /data/data/eosio_mainnet/eos/build/unittests/contracts/eosio.system/eosio.system.wasm...
+Publishing contract...
+executed transaction: 6fae667326a60189f081f6411dd193a417fb2a118e1bd730ac10c71d90dcbce0  66928 bytes  7908 us
+#         eosio <= eosio::setcode               {"account":"eosio","vmtype":0,"vmversion":0,"code":"0061736d01000000018a033960027f7f0060057f7f7f7f7f...
+#         eosio <= eosio::setabi                {"account":"eosio","abi":"0e656f73696f3a3a6162692f312e30004c086162695f686173680002056f776e6572046e61...
+>> WGM : 1
+warning: transaction executed locally, but may not be confirmed by the network yet         ] 
+*/
+
+
+
+// ----------------------------------------------
+// smart contract
+// contract account: eosio.token
+// ----------------------------------------------
+// account: eosio.token
+// Keys for Owner
+./cleos create key --to-console
+Private key: 5Jb6schTNsyJ6cJpz2tnaNrNPozesgNThhf11zzqYQraa3Qu8Q2
+Public key: EOS5Fpz6mTqRqntM6ndMQrQur14VrX2MqPCwqYCJj28Dr1NwVVkAm
+
+// Keys for Active
+./cleos create key --to-console
+Private key: 5KNZM2yATJjUc91538r2uNwVHjMBSDMVdkhRCD9GS26EHtgNP7R
+Public key: EOS6Hzx78rWYYjciZ8bp2x6BmgKNDJjaXtPosaA2x7ZL2JSAbvXC6
+
+// import private keys into wallet
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet import --private-key 5Jb6schTNsyJ6cJpz2tnaNrNPozesgNThhf11zzqYQraa3Qu8Q2
+imported private key for: EOS5Fpz6mTqRqntM6ndMQrQur14VrX2MqPCwqYCJj28Dr1NwVVkAm
+
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 wallet import --private-key 5KNZM2yATJjUc91538r2uNwVHjMBSDMVdkhRCD9GS26EHtgNP7R
+imported private key for: EOS6Hzx78rWYYjciZ8bp2x6BmgKNDJjaXtPosaA2x7ZL2JSAbvXC6
+
+
+// creates account
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 create account eosio eosio.token EOS5Fpz6mTqRqntM6ndMQrQur14VrX2MqPCwqYCJj28Dr1NwVVkAm EOS6Hzx78rWYYjciZ8bp2x6BmgKNDJjaXtPosaA2x7ZL2JSAbvXC6
+executed transaction: 155b941861c0697704808ff992dad359caeaa8283f2afa33b2c36db9d505162b  200 bytes  126 us
+#         eosio <= eosio::newaccount            {"creator":"eosio","name":"eosio.token","owner":{"threshold":1,"keys":[{"key":"EOS5Fpz6mTqRqntM6ndMQ...
+warning: transaction executed locally, but may not be confirmed by the network yet         ]
+
+
+
+// ----------------------------------------------
+// creates token and deploy
+// ----------------------------------------------
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 set contract eosio.token /data/data/eosio_mainnet/eos/build/unittests/contracts/eosio.token
+Reading WASM from /data/data/eosio_mainnet/eos/build/unittests/contracts/eosio.token/eosio.token.wasm...
+Publishing contract...
+executed transaction: fcf0f11784551e60b0770c965ecd76fda7fb3ebc3c750c70520956352670fd8b  9304 bytes  1044 us
+#         eosio <= eosio::setcode               {"account":"eosio.token","vmtype":0,"vmversion":0,"code":"0061736d0100000001aa011c60037f7e7f0060047f...
+#         eosio <= eosio::setabi                {"account":"eosio.token","abi":"0e656f73696f3a3a6162692f312e310008076163636f756e7400010762616c616e63...
+warning: transaction executed locally, but may not be confirmed by the network yet         ]
+
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 push action eosio.token create '[eosio, "10000000000.0000 EOS"]' -p eosio.token
+executed transaction: d3e6819f818f93c3a2a954dafecfaf27e8571c794789717a87e8296294b78a81  120 bytes  166 us
+#   eosio.token <= eosio.token::create          {"issuer":"eosio","maximum_supply":"10000000000.0000 EOS"}
+warning: transaction executed locally, but may not be confirmed by the network yet         ]
+
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 push action eosio.token issue '[eosio, "1000000000.0000 EOS", "test_memo"]' -p eosio
+executed transaction: 9bf67090a8f20bab45c9204695b2f02e2a75489c15f4a4afdfe4656b4d6e4657  128 bytes  198 us
+#   eosio.token <= eosio.token::issue           {"to":"eosio","quantity":"1000000000.0000 EOS","memo":"test_memo"}
+warning: transaction executed locally, but may not be confirmed by the network yet         ]
+
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 get currency balance eosio.token eosio EOS
+1000000000.0000 EOS
+
+
+
+// ----------------------------------------------
+// transfer
+// ----------------------------------------------
+// transfer to <testtestaaa1>
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 push action eosio.token transfer '["eosio", "testtestaaa1", "1.0000 EOS", "test_message"]' -p eosio
+executed transaction: 1d6e99d6c69d3bb617b9257666ce1af746bae42a36e53de9faf9e6f714f8f18e  144 bytes  206 us
+#   eosio.token <= eosio.token::transfer        {"from":"eosio","to":"testtestaaa1","quantity":"1.0000 EOS","memo":"test_message"}
+#         eosio <= eosio.token::transfer        {"from":"eosio","to":"testtestaaa1","quantity":"1.0000 EOS","memo":"test_message"}
+#  testtestaaa1 <= eosio.token::transfer        {"from":"eosio","to":"testtestaaa1","quantity":"1.0000 EOS","memo":"test_message"}
+warning: transaction executed locally, but may not be confirmed by the network yet         ]
+
+// balance <testtestaaa1>
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 get currency balance eosio.token testtestaaa1 EOS
+1.0000 EOS
+
+
+
+./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 get currency stats eosio.token EOS
+{
+  "EOS": {
+    "supply": "1000000000.0000 EOS",
+    "max_supply": "10000000000.0000 EOS",
+    "issuer": "eosio"
+  }
+}
+
+
+

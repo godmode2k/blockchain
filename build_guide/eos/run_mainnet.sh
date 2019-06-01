@@ -22,8 +22,8 @@ CONFIG_DIR="--config-dir $BASE_DIR/nodeos/config"
 
 ### MAINNET ###
 echo "### MAINNET ###"
-echo "$BIN $DATA_DIR $CONFIG_DIR -e --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --contracts-console"
-$BIN $DATA_DIR $CONFIG_DIR -e --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --contracts-console
+echo "$BIN $DATA_DIR $CONFIG_DIR --genesis-json genesis.json -e --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --contracts-console"
+$BIN $DATA_DIR $CONFIG_DIR --genesis-json genesis.json -e --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --contracts-console
 
 # Recover
 #echo "$BIN $DATA_DIR $CONFIG_DIR -e --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --contracts-console --replay-blockchain --hard-replay-blockchain"
