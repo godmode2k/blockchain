@@ -3,7 +3,7 @@
 
 Summary
 ----------
-> Build a BTC/ETH/DSH/QTUM/XVG/...
+> Build a BTC/ETH/DSH/QTUM/XVG/XRP/...
 > - hjkim, 2018.11.13
 
 
