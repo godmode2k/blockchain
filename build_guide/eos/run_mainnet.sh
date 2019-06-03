@@ -13,6 +13,7 @@ BIN=/data/data/eosio_mainnet/sync_data/nodeos
 BASE_DIR="/data/data/eosio_mainnet/sync_data/mainnet"
 DATA_DIR="--data-dir $BASE_DIR/nodeos/data"
 CONFIG_DIR="--config-dir $BASE_DIR/nodeos/config"
+# 200 GiB
 CHAIN_STATE_DB_SIZE="--chain-state-db-size-mb 204800"
 
 # -e: enable-stale-production = true
