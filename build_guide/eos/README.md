@@ -85,6 +85,9 @@ export BOOST_VERSION_PATCH=0
 // --------------------------------------------------------------
 // config.ini: $HOME/.local/share/eosio/nodeos/config/config.ini
 // --------------------------------------------------------------
+# chain-state-db-size-mb = 1024
+chain-state-db-size-mb = 204800
+
 # The public endpoint of a peer node to connect to. Use multiple p2p-peer-address options as needed to compose a network. (eosio::net_plugin)
 # p2p-peer-address = 
 p2p-peer-address = bp.antpool.com:443
