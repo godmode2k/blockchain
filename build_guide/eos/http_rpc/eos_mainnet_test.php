@@ -2,7 +2,7 @@
 //
 // EOS Wallet
 //
-// hjkim, 2018.11.02
+// hjkim, 2019.05.13
 //
 
 
@@ -154,9 +154,322 @@ function getnewaddress($eos, $_account) {
 		exit;
 	}
 
+	if ( !isset($_account) || empty($_account) ) {
+		echo "" . make_json_error( "false", "account == NULL" );
+		exit;
+	}
+
+	wallet_unlock( $eos );
+
 // e.g.,
+// testnet
 // ./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 create account eosio <account name> <owner public key> <active public key>
+//
+// mainnet
 // ./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 system newaccount <authorized account> <account name> <owner public key> <active public key> --stake-net "0.1 EOS" --stake-cpu "0.1 EOS" --buy-ram-kbytes 3
+
+
+
+	// creates two pairs of keys for the Owner and Active
+// public keys
+//curl http://localhost:8889/v1/wallet/create_key \
+//  --header 'accept: application/json' \
+//  --header 'content-type: application/json' \
+////  --header 'content-type: application/json; charset=UTF-8' \
+//  -X POST
+//  --data '["default","k1"]'
+	$params = "[\"default\",\"k1\"]";
+	$url = "v1/wallet/create_key";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	// public key: owner
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result_publickey_owner = json_decode($result);
+	if ( !isset($result_publickey_owner) || empty($result_publickey_owner) ) {
+		echo "" . make_json_error( "false", "creates public key: owner" );
+		exit;
+	}
+	// public key: active
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result_publickey_active = json_decode($result);
+	if ( !isset($result_publickey_active) || empty($result_publickey_active) ) {
+		echo "" . make_json_error( "false", "creates public key: active" );
+		exit;
+	}
+
+	echo "owner public key = " . $result_publickey_owner . "\n";
+	echo "active public key = " . $result_publickey_active . "\n";
+
+
+
+// list keys
+//curl http://localhost:8889/v1/wallet/list_keys \
+//  --header 'accept: application/json' \
+//  --header 'content-type: application/json' \
+////  --header 'content-type: application/json; charset=UTF-8' \
+//  -X POST
+//  --data '["default","wallet passphrase"]'
+	//$params = "[\"default\"]";
+	$params = "[\"default\"," . "\"" . WPASSPHRASE . "\"]";
+	$url = "v1/wallet/list_keys";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result_list_keys = json_decode($result);
+	if ( !isset($result_list_keys) || empty($result_list_keys) ) {
+		echo "" . make_json_error( "false", "list keys" );
+		exit;
+	}
+
+	echo "list keys = \n";
+	var_dump($result_list_keys);
+
+
+
+
+	exit;
+
+
+
+//! private and public keys are imported automatically
+/*
+	// import keys
+// public keys
+//curl http://localhost:8889/v1/wallet/import_key \
+//  --header 'accept: application/json' \
+//  --header 'content-type: application/json' \
+////  --header 'content-type: application/json; charset=UTF-8' \
+//  -X POST
+//  --data '["default","<private key>"]'
+	$params = "[\"default\",\"$result_privatekey_owner\"]";
+	$url = "v1/wallet/import_key";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	// private key: owner
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result = json_decode($result);
+	if ( !isset($result) || empty($result) ) {
+		echo "" . make_json_error( "false", "import private key: owner" );
+		exit;
+	}
+
+	$params = "[\"default\",\"$result_privatekey_active\"]";
+	$url = "v1/wallet/import_key";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	// private key: active
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result = json_decode($result);
+	if ( !isset($result) || empty($result) ) {
+		echo "" . make_json_error( "false", "import private key: active" );
+		exit;
+	}
+*/
+
+
+
+	// creates account
+	// ...
+
+}
+
+function getcreateaccount($eos, $_account) {
+	if ( !isset($eos) ) {
+		echo "" . make_json_error( "false" );
+		exit;
+	}
+
+	if ( !isset($_account) || empty($_account) ) {
+		echo "" . make_json_error( "false", "account == NULL" );
+		exit;
+	}
+
+	wallet_unlock( $eos );
+
+// e.g.,
+// testnet
+// ./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 create account eosio <account name> <owner public key> <active public key>
+
+
+	//! checks account existed
+	$result = getaccounts( $eos, $_account );
+	$result = json_decode ($result );
+	if ( !isset(((array)$result)["account_name"])
+		|| empty(((array)$result)["account_name"])
+		|| !isset(((array)$result)["head_block_num"])
+		|| !isset(((array)$result)["head_block_num"]) ) {
+	}
+	else {
+		echo "" . make_json_error( "false", "creates account: existed" );
+		exit;
+	}
+
+
+
+	// creates two pairs of keys for the Owner and Active
+// public keys
+//curl http://localhost:8889/v1/wallet/create_key \
+//  --header 'accept: application/json' \
+//  --header 'content-type: application/json' \
+////  --header 'content-type: application/json; charset=UTF-8' \
+//  -X POST
+//  --data '["default","k1"]'
+	$params = "[\"default\",\"k1\"]";
+	$url = "v1/wallet/create_key";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	// public key: owner
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result_publickey_owner = json_decode($result);
+	if ( !isset($result_publickey_owner) || empty($result_publickey_owner) ) {
+		echo "" . make_json_error( "false", "creates public key: owner" );
+		exit;
+	}
+	// public key: active
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result_publickey_active = json_decode($result);
+	if ( !isset($result_publickey_active) || empty($result_publickey_active) ) {
+		echo "" . make_json_error( "false", "creates public key: active" );
+		exit;
+	}
+
+	//echo "owner public key = " . $result_publickey_owner . "\n";
+	//echo "active public key = " . $result_publickey_active . "\n";
+
+
+
+// list keys
+//curl http://localhost:8889/v1/wallet/list_keys \
+//  --header 'accept: application/json' \
+//  --header 'content-type: application/json' \
+////  --header 'content-type: application/json; charset=UTF-8' \
+//  -X POST
+//  --data '["default","wallet passphrase"]'
+	//$params = "[\"default\"]";
+	$params = "[\"default\"," . "\"" . WPASSPHRASE . "\"]";
+	$url = "v1/wallet/list_keys";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result_list_keys = json_decode($result);
+	if ( !isset($result_list_keys) || empty($result_list_keys) ) {
+		echo "" . make_json_error( "false", "list keys" );
+		exit;
+	}
+
+	//echo "list keys = \n";
+	//var_dump($result_list_keys);
+
+
+
+//! private and public keys are imported automatically
+/*
+	// import keys
+// public keys
+//curl http://localhost:8889/v1/wallet/import_key \
+//  --header 'accept: application/json' \
+//  --header 'content-type: application/json' \
+////  --header 'content-type: application/json; charset=UTF-8' \
+//  -X POST
+//  --data '["default","<private key>"]'
+	$params = "[\"default\",\"$result_privatekey_owner\"]";
+	$url = "v1/wallet/import_key";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	// private key: owner
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result = json_decode($result);
+	if ( !isset($result) || empty($result) ) {
+		echo "" . make_json_error( "false", "import private key: owner" );
+		exit;
+	}
+
+	$params = "[\"default\",\"$result_privatekey_active\"]";
+	$url = "v1/wallet/import_key";
+	//$result = $eos->request_wallet( $url, $params, false );
+
+	// private key: active
+	$result = $eos->request_wallet( $url, $params, false, false );
+	$result = json_decode($result);
+	if ( !isset($result) || empty($result) ) {
+		echo "" . make_json_error( "false", "import private key: active" );
+		exit;
+	}
+*/
+
+
+
+// creates account
+// USE popen() to use <cleos>
+//$ cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 create account eosio <new_account> <owner public key> <active public key>
+//executed transaction: 2e067e18db103bad26291b02940290d5ca2be9863b484c44b22660666776018f  200 bytes  243 us
+//#         eosio <= eosio::newaccount            {"creator":"eosio","name":"<new_account>","owner":{"threshold":1,"keys":[{"key":"EOS7dUqdb2mCHJ3GTgxA...
+//warning: transaction executed locally, but may not be confirmed by the network yet         ]
+	$create__account = $_account;
+	$create__owner_public_key = $result_publickey_owner;
+	$create__active_public_key = $result_publickey_active;
+	$cmd = "../../../cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 create account eosio $create__account $create__owner_public_key $create__active_public_key";
+
+	//echo "cmd = " . $cmd . "\n";
+
+	$fp = popen( $cmd, "r" );
+	if ( !isset($fp) || empty($fp) ) {
+		echo "" . make_json_error( "false", "creates account" );
+		exit;
+	}
+
+	// Error results will be NULL
+	$result = fread( $fp, 4096 );
+	//var_dump($result);
+
+	//while ( !feof($fp) ) {
+	//	$_result = fread( $fp, 2048 );
+	//	$result .= $_result;
+	//}
+	if ( !isset($result) || empty($result) ) {
+		echo "" . make_json_error( "false", "creates account" );
+		exit;
+	}
+
+	if ( isset($fp) || !empty($fp) ) {
+		pclose( $fp );
+	}
+
+
+	// checks account created
+	$result = getaccounts( $eos, $create__account );
+	$result = json_decode ($result );
+	if ( !isset(((array)$result)["account_name"])
+		|| empty(((array)$result)["account_name"])
+		|| !isset(((array)$result)["head_block_num"])
+		|| !isset(((array)$result)["head_block_num"]) ) {
+		echo "" . make_json_error( "false", "creates account: not found" );
+		exit;
+	}
+	if ( isset(((array)$result)["code"]) && !empty(((array)$result)["code"])
+			|| isset(((array)$result)["error"]) && !empty(((array)$result)["error"]) ) {
+		echo "" . make_json_error( "false", "creates account: error" );
+		exit;
+	}
+
+	$result_json = make_json( $result_json, "", "", false, true );
+	//$result_json = make_json( $result_json, "result", "true", true, false );
+	$result_json = make_json( $result_json, "account", $create__account, false, false );
+	$result_json = make_json_end( $result_json );
+
+	$result_json = "[" . $result_json . "]";
+	return $result_json;
+
+
+
+/*
+// expected result:
+[
+  {
+    "account": "..."
+  }
+]
+*/
 
 }
 
@@ -591,10 +904,64 @@ if ( !isset($eos) ) {
 }
 
 
-//$_account = "testaaaaaaa1";
-$result = getaccounts( $eos, $_account );
 
-//$result = getbalance( $eos, $_account );
+// get accounts
+//$account = "testaaaaaaa1"; // can be NULL
+//$result = getaccounts( $eos, $account );
+
+
+
+// mainnet
+// get new address
+//$account = "testaaaaaa1a";
+//$result = getnewaddress( $eos, $account );
+
+
+
+// testnet
+// creates account
+//$account = "testaaaaaa1g";
+//$result = getcreateaccount( $eos, $account );
+
+
+
+// get balance
+//$account = ""; // can be NULL
+//$result = getbalance( $eos, $account );
+
+
+
+// sendfrom
+//$from_account = "";
+//$to_account = "";
+//$amount = "";
+//$wallet_passphrase = "";
+//$result = sendfrom( $eos, $from_account, $to_account, $amount, $wallet_passphrase );
+
+
+
+// sendto
+//$to_account = "";
+//$amount = "";
+//$result = sendto( $eos, $to_account, $amount );
+
+
+
+// get transaction
+//$_account = "";
+//$result = gettransactions( $eos, $_account );
+
+
+
+// get transaction by hash
+//$txhash = "";
+//$result gettransactionhash( $eos, $txhash );
+
+
+
+// get pending list
+//$txid = "";
+//$result = gettxpool( $eos, $txid );
 
 
 
