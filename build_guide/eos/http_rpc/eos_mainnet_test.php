@@ -52,7 +52,8 @@ function make_json_error($val, $message = "") {
 
 $eos_contracts = array(
 	// ("contract account", "symbol")
-	array("testaaaaaaa1", "EOS")
+	//array("testaaaaaaa1", "EOS")
+	array("eosio.token", "EOS")
 );
 
 
@@ -167,6 +168,20 @@ function getnewaddress($eos, $_account) {
 //
 // mainnet
 // ./cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8889 system newaccount <authorized account> <account name> <owner public key> <active public key> --stake-net "0.1 EOS" --stake-cpu "0.1 EOS" --buy-ram-kbytes 3
+
+
+	//! checks account existed
+	$result = getaccounts( $eos, $_account );
+	$result = json_decode ($result );
+	if ( !isset(((array)$result)["account_name"])
+		|| empty(((array)$result)["account_name"])
+		|| !isset(((array)$result)["head_block_num"])
+		|| !isset(((array)$result)["head_block_num"]) ) {
+	}
+	else {
+		echo "" . make_json_error( "false", "creates account: existed" );
+		exit;
+	}
 
 
 
@@ -631,11 +646,12 @@ function getbalance($eos, $_account) {
 					$result_balance = json_decode($result_balance);
 
 					if ( !is_array($result_balance) || sizeof($result_balance) <= 0 ) {
-						echo "" . make_json_error( "false", "get currency balance" );
-						exit;
+						continue;
+						//echo "" . make_json_error( "false", "get currency balance" );
+						//exit;
 					}
 
-					array_push( $account_list[$i]["balance"], $result_balance[0] );
+					array_push( $account_list[$j]["balance"], $result_balance[0] );
 				}
 			}
 
@@ -649,7 +665,9 @@ function getbalance($eos, $_account) {
       "EOS6M8QgvoRktBk5vi4z79KFk3TR9zPn7jgLkMuK1JfUajFSECgFz"
     ],
     "balance": [
-      "1.0000 EOS"
+      "1.0000 EOS",
+      "1.0000 XXX",
+	  ...
     ]
   },
   {
@@ -667,27 +685,57 @@ function getbalance($eos, $_account) {
 		$result_json = json_encode( $account_list );
 	}
 	else {
-// e.g.,
-//curl http://127.0.0.1:8888/v1/chain/get_account \
-//  --header 'accept: application/json' \
-//  --header 'content-type: application/json' \
-////  --header 'content-type: application/json; charset=UTF-8' \
-//  -X POST \
-//  --data '{"account_name":"eosio"}'
+		global $eos_contracts;
+		$account_list = array();
 
-		//$_account = "testaaaaaaa1";
-		$params = array(
-			'account_name' => $_account
+		$new_account = array(
+			"account" => $_account,
+			"balance" => array()
 		);
-		$url = "v1/chain/get_account";
-		$result_json = $eos->request_chain( $url, $params, true, false );
+		array_push( $account_list, $new_account );
+
+		// balance
+		for ( $i = 0; $i < sizeof($eos_contracts); $i++ ) {
+			$params = array(
+				'code' => $eos_contracts[$i][0],
+				'account' => $account_list[0]["account"],
+				'symbol' => $eos_contracts[$i][1]
+			);
+			$url = "v1/chain/get_currency_balance";
+			$result_balance = $eos->request_chain( $url, $params, true, false );
+			$result_balance = json_decode($result_balance);
+
+			if ( !is_array($result_balance) || sizeof($result_balance) <= 0 ) {
+				//echo "" . make_json_error( "false", "get currency balance" );
+				//exit;
+				continue;
+			}
+
+			array_push( $account_list[0]["balance"], $result_balance[0] );
+		}
+
+		$result_json = json_encode( $account_list );
+
+/*
+// expected result:
+[
+  {
+    "account": "testaaaaaaa1",
+    "balance": [
+      "1.0000 EOS",
+      "1.0000 XXX",
+	  ...
+    ]
+  }
+]
+*/
+
 	}
 
 	return $result_json;
-
 }
 
-function sendfrom($eos, $_from_account, $_to_account, $_amount, $_wallet_passphrase) {
+function sendfrom($eos, $_from_account, $_to_account, $_memo, $_amount, $_wallet_passphrase) {
 	if ( !isset($eos) ) {
 		echo "" . make_json_error( "false" );
 		exit;
@@ -703,6 +751,12 @@ function sendfrom($eos, $_from_account, $_to_account, $_amount, $_wallet_passphr
 
 	$datetime_zone = date_default_timezone_get();
 
+}
+
+function sendto($eos, $_to_account, $_memo, $_amount) {
+	$_from_account = "";
+	$_wallet_passphrase = "";
+	sendfrom( $eos, $_from_account, $_to_account, $_memo, $_amount, $_wallet_passphrase );
 }
 
 function gettransactions($eos, $_account) {
@@ -913,6 +967,7 @@ if ( !isset($eos) ) {
 
 // mainnet
 // get new address
+// - do not create one always, just create one(share) and use memo features for account's id.
 //$account = "testaaaaaa1a";
 //$result = getnewaddress( $eos, $account );
 
@@ -920,6 +975,7 @@ if ( !isset($eos) ) {
 
 // testnet
 // creates account
+// - do not create one always, just create one(share) and use memo features for account's id.
 //$account = "testaaaaaa1g";
 //$result = getcreateaccount( $eos, $account );
 
@@ -934,16 +990,18 @@ if ( !isset($eos) ) {
 // sendfrom
 //$from_account = "";
 //$to_account = "";
+//$memo = ""; // (recipient) account's id
 //$amount = "";
 //$wallet_passphrase = "";
-//$result = sendfrom( $eos, $from_account, $to_account, $amount, $wallet_passphrase );
+//$result = sendfrom( $eos, $from_account, $to_account, $memo, $amount, $wallet_passphrase );
 
 
 
 // sendto
 //$to_account = "";
+//$memo = ""; // (recipient) account's id
 //$amount = "";
-//$result = sendto( $eos, $to_account, $amount );
+//$result = sendto( $eos, $to_account, $memo, $amount );
 
 
 
