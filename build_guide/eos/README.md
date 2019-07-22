@@ -45,7 +45,7 @@ wallet
 $ git clone https://github.com/EOSIO/eos.git
 $ cd ./eos
 $ git submodule update --init --recursive
-$ ./scripts/eosio_build.sh
+$ ./scripts/eosio_build.sh -s "EOS"
 
 
 
@@ -55,7 +55,7 @@ $ ./scripts/eosio_build.sh
 $ mkdir ./eos-v1.7.3 && cd ./eos-v1.7.3
 $ git clone -b v1.7.3 https://github.com/EOSIO/eos.git .
 $ git submodule update --init --recursive
-$ ./scripts/eosio_build.sh
+$ ./scripts/eosio_build.sh -s "EOS"
 
 
 
@@ -88,6 +88,11 @@ export BOOST_VERSION_PATCH=0
 # chain-state-db-size-mb = 1024
 # 200 GiB
 chain-state-db-size-mb = 204800
+
+
+# validation-mode = full
+validation-mode = light
+
 
 # The public endpoint of a peer node to connect to. Use multiple p2p-peer-address options as needed to compose a network. (eosio::net_plugin)
 # p2p-peer-address = 
