@@ -1,0 +1,359 @@
+
+ViaBTC build & HTTP-RPC API test guide
+ - hjkim, 2019.07.01
+
+
+
+--------------------------------------------
+ViaBTC
+--------------------------------------------
+https://github.com/viabtc/viabtc_exchange_server
+
+$ git clone https://github.com/viabtc/viabtc_exchange_server.git
+
+
+ 
+--------------------------------------------
+librdkafka
+--------------------------------------------
+https://github.com/edenhill/librdkafka
+(USE this)
+https://github.com/edenhill/librdkafka/archive/v1.1.0.tar.gz
+
+$ git clone https://github.com/edenhill/librdkafka.git
+
+
+
+--------------------------------------------
+kafka
+--------------------------------------------
+https://github.com/wurstmeister/kafka-docker
+https://github.com/wurstmeister/kafka-docker/archive/1.1.0.tar.gz
+
+$ git clone https://github.com/wurstmeister/kafka-docker.git
+
+or
+
+$ sudo docker pull wurstmeister/kafka
+
+
+
+--------------------------------------------
+Redis
+--------------------------------------------
+$ sudo docker pull redis
+
+
+
+--------------------------------------------
+Redis-Sentinel
+--------------------------------------------
+https://github.com/vhf/redis-sentinel-docker-example
+
+$ git clone https://github.com/vhf/redis-sentinel-docker-example.git
+
+// edit docker-compose.yml [
+removes "networks: {...}"
+replace: expose -> ports
+
+redis1:
+  image: redis:4.0.0
+  ports:
+    - "6380:6379"
+redis2:
+  image: redis:4.0.0
+  ports:
+    - "6381:6379"
+redis3:
+  image: redis:4.0.0
+  ports:
+    - "6382:6379"
+
+sentinel1:
+  ports:
+    - "26380:26379"
+  volumes:
+    - ./sentinel1.conf:/etc/sentinel.conf
+sentinel2:
+  ports:
+    - "26381:26379"
+  volumes:
+    - ./sentinel2.conf:/etc/sentinel.conf
+sentinel3:
+  ports:
+    - "26382:26379"
+  volumes:
+    - ./sentinel3.conf:/etc/sentinel.conf
+
+...
+volumes:
+    sentinel1.conf:
+    sentinel2.conf:
+    sentinel3.conf:
+// ]
+
+
+$ chmod 666 sentinel*.conf
+$ sudo docker-compose up
+...
+$ "CTRL + C" to quit
+
+
+// edit sentinel1.conf, sentinel2.conf, sentinel3.conf [
+my_redis_master {replace IP -> 127.0.0.1:xxxx}
+// ]
+
+
+$ sudo docker-compose up
+
+
+
+--------------------------------------------
+Installation
+--------------------------------------------
+https://github.com/lealife/viabtc_exchange_server/issues/1
+
+$ sudo apt-get install libcurl3 libcurl3-gnutls libcurl3-nss libcurl4-gnutls-dev libcurl4-nss-dev libcurlpp-dev libcurl4-openssl-dev 
+$ sudo apt-get install libmysqlclient-dev
+$ sudo apt-get install libjansson-dev
+$ sudo apt-get install libmpdec-dev
+$ sudo apt-get install libev-dev
+$ sudo apt-get install liblz4-dev
+
+
+
+// librdkafka
+$ git clone https://github.com/edenhill/librdkafka.git
+$ cd librdkafka
+$ ./configure
+$ make
+$ ln -s ./src ./librdkafka
+
+
+
+// MySQL
+$ sudo docker pull mysql
+
+
+
+// Redis
+$ sudo docker pull redis
+
+
+
+// Redis-Sentinel
+// SEE: above
+
+
+
+// Imports SQL schema
+$ mysql -h 127.0.0.1 -u root -p < create_trade_history.sql
+$ mysql -h 127.0.0.1 -u root -p < create_trade_log.sql
+$ init_trade_history.sh
+
+
+
+// === build === [
+$ cd depends/hiredis && make
+$ cd network && make
+
+$ cd utils
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+// ]
+$ make
+
+$ cd accesshttp
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
+// ]
+$ make
+
+$ cd accessws
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -lcurl
+// ]
+$ make
+
+$ cd alertcenter
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
+// ]
+$ make
+
+$ cd marketprice
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
+// ]
+$ make
+
+$ cd matchengine
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -lrdkafka -lmysqlclient
+// ]
+$ make
+
+$ cd readhistory
+// edit makefile [
+INCS = ... -I ../depends -I ../../librdkafka
+LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -lrdkafka -lmysqlclient
+// ]
+$ make
+
+$ cd test/marketprice
+// edit makefile [
+INCS = ... -I ../../depends -I ../../../librdkafka
+LIBS = ... -L ../../depends/hiredis -L ../../../librdkafka/librdkafka
+// ]
+$ make
+
+$ cd test/matchengine && make
+$ cd test/utils && make
+// === build === ]
+
+
+
+// === Start === [
+$ cd matchengine && ./restart.sh
+$ cd ../alertcenter && ./restart.sh
+$ cd ../readhistory && ./restart.sh
+$ cd ../accesshttp && ./restart.sh
+$ cd ../accessws && ./restart.sh
+$ cd ../marketprice && ./restart.sh
+// === Start === ]
+
+
+
+--------------------------------------------
+HTTP API
+--------------------------------------------
+https://github.com/viabtc/viabtc_exchange_server/wiki/HTTP-Protocol
+
+// $ curl http://127.0.0.1:8080 -d '{"method": "", "params": [], "id": 1}'
+
+
+
+curl http://127.0.0.1:8080/ -d '{"method": "balance.query", "params": [1, "BTC"], "id": 1}'
+{
+	"error": null,
+		"result": {
+			"BTC": {
+				"available": "0",
+				"freeze": "0"
+			}
+		},
+		"id": 1
+}
+
+
+
+// Asset
+------------------------------------
+
+curl http://127.0.0.1:8080/ -d '{"method": "asset.list", "params": [], "id": 1}'
+curl http://127.0.0.1:8080/ -d '{"method": "asset.summary", "params": [], "id": 1}'
+
+
+
+// Balance
+------------------------------------
+
+// balance
+curl http://127.0.0.1:8080/ -d '{"method": "balance.query", "params": [1, "BTC"], "id": 1}'
+// balance history: limit count: 100
+curl http://127.0.0.1:8080/ -d '{"method": "balance.history", "params": [1, "BTC", "", 0, 0, 0, 100], "id": 1}'
+
+// set
+curl http://127.0.0.1:8080/ -d '{"method": "balance.update", "params": [1, "BTC", "deposit", 100, "100.1234", {}], "id": 1}'
+curl http://127.0.0.1:8080/ -d '{"method": "balance.update", "params": [1, "BTC", "deposit", 101, "100.1234", {}], "id": 1}'
+curl http://127.0.0.1:8080/ -d '{"method": "balance.update", "params": [1, "BTC", "withdraw", 100, "-10.34", {}], "id": 1}'
+
+
+
+// Trade
+------------------------------------
+
+[Order Book]
+
+// Order list: sell
+curl http://127.0.0.1:8080/ -d '{"method": "order.book", "params": ["BTCBCH", 1, 0, 100], "id": 1}'
+
+// Order list: buy
+curl http://127.0.0.1:8080/ -d '{"method": "order.book", "params": ["BTCBCH", 2, 0, 100], "id": 1}'
+
+// Order list: depth
+curl http://127.0.0.1:8080/ -d '{"method": "order.depth", "params": ["BTCBCH", 0, "0"], "id": 1}'
+
+
+// inquire
+curl http://127.0.0.1:8080/ -d '{"method": "order.pending", "params": [1, "BTCBCH", 0, 100], "id": 1}'
+curl http://127.0.0.1:8080/ -d '{"method": "order.pending_detail", "params": ["BTCBCH", 0], "id": 1}'
+// - all, limit 1
+curl http://127.0.0.1:8080/ -d '{"method": "order.finished", "params": [1, "BTCBCH", 0, 0, 0, 1, 0], "id": 1}'
+// - sell, limit 1
+curl http://127.0.0.1:8080/ -d '{"method": "order.finished", "params": [1, "BTCBCH", 0, 0, 0, 1, 1], "id": 1}'
+// - buy, limit 1
+curl http://127.0.0.1:8080/ -d '{"method": "order.finished", "params": [1, "BTCBCH", 0, 0, 0, 1, 2], "id": 1}'
+// - executed order details: order id 100
+curl http://127.0.0.1:8080/ -d '{"method": "order.finished_detail", "params": [100], "id": 1}'
+// - order details: order id 100, limit 1
+curl http://127.0.0.1:8080/ -d '{"method": "order.deals", "params": [100, 0, 0], "id": 1}'
+
+
+[Trade]
+
+// place limit order
+// - sell 10.1234 at 8000
+curl http://127.0.0.1:8080/ -d '{"method": "order.put_limit", "params": [1, "BTCBCH", 1, "10.1234", "8000", "0.002", "0.001", "text"], "id": 1}'
+// - buy 10 at 8000
+curl http://127.0.0.1:8080/ -d '{"method": "order.put_limit", "params": [1, "BTCBCH", 2, "10", "8000", "0.002", "0.001", "text"], "id": 1}'
+
+// place market order
+// - sell
+curl http://127.0.0.1:8080/ -d '{"method": "order.put_market", "params": [1, "BTCBCH", 1, "10.1234", "0.002", "text"], "id": 1}'
+
+// cancel order: order id 100
+curl http://127.0.0.1:8080/ -d '{"method": "order.cancel", "params": [1, "BTCBCH", 100], "id": 1}'
+
+
+
+// Market
+------------------------------------
+
+curl http://127.0.0.1:8080/ -d '{"method": "market.list", "params": [], "id": 1}'
+curl http://127.0.0.1:8080/ -d '{"method": "market.summary", "params": [], "id": 1}'
+curl http://127.0.0.1:8080/ -d '{"method": "market.summary", "params": ["BTCBCH"], "id": 1}'
+
+
+// Market price (last)
+curl http://127.0.0.1:8080/ -d '{"method": "market.last", "params": ["BTCBCH"], "id": 1}'
+
+// executed history
+// - limit count: 100
+curl http://127.0.0.1:8080/ -d '{"method": "market.deals", "params": ["BTCBCH", 100, 0], "id": 1}'
+
+// user executed history
+// - limit count: 100
+curl http://127.0.0.1:8080/ -d '{"method": "market.user_deals", "params": [1, "BTCBCH", 0, 100], "id": 1}'
+
+
+// Kline
+curl http://127.0.0.1:8080/ -d '{"method": "market.kline", "params": ["BTCBCH", 1, 100, 1], "id": 1}'
+
+
+// status
+// - period (cycle period): 86400 for last 24 hours
+curl http://127.0.0.1:8080/ -d '{"method": "market.status", "params": ["BTCBCH", 86400], "id": 1}'
+
+
+// status today
+curl http://127.0.0.1:8080/ -d '{"method": "market.status_today", "params": ["BTCBCH"], "id": 1}'
+
+
+
+
