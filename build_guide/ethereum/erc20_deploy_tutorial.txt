@@ -1,0 +1,328 @@
+Ethereum ERC-20 Token: create & deploy test
+ - hjkim, 2019.08.08
+
+
+
+---------------------------------------------------
+Prerequisites
+---------------------------------------------------
+docker (container): Ubuntu, nodejs, python, truffle, zeppelin-solidity
+Host: go-ethereum, cURL
+
+
+
+$ sudo docker run -it --net=host --name "erc20_deploy" ubuntu bash
+
+(container)
+
+---------------------------------------------------
+---------------------------------------------------
+# apt-get update
+# apt-get install build-essential wget git python
+
+
+---------------------------------------------------
+nodejs
+---------------------------------------------------
+# wget https://nodejs.org/dist/v10.16.2/node-v10.16.2-linux-x64.tar.xz
+# tar xJvf node-v10.16.2-linux-x64.tar.xz
+# export PATH=`pwd`/node-v10.16.2-linux-x64/bin:$PATH
+
+
+---------------------------------------------------
+truffle, zeppelin-solidity
+---------------------------------------------------
+# npm install --unsafe-perm=true --allow-root -g truffle@4.1.15
+# mkdir test && cd test
+# truffle init
+# npm init
+# npm install zeppelin-solidity
+
+
+---------------------------------------------------
+create & edit
+ - contract
+---------------------------------------------------
+1. contracts/MyCoin.sol
+---
+	pragma solidity ^0.4.18;
+	import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+
+	contract AbcdefCoin is StandardToken {
+		string public name = "AbcdefCoin"; 
+		string public symbol = "ABCD";
+		uint public decimals = 18;
+		uint public INITIAL_SUPPLY = 1000000 * (10 ** (uint256)decimals);
+
+		function AbcdefCoin() public {
+			totalSupply_ = INITIAL_SUPPLY;
+			balances[msg.sender] = INITIAL_SUPPLY;
+		}
+	}
+---
+
+2. migrations/2_deploy_mycoin.js
+---
+	var AbcdefCoin = artifacts.require("./AbcdefCoin.sol");
+	module.exports = function(deployer) {
+		deployer.deploy(AbcdefCoin);
+	};
+---
+
+
+---------------------------------------------------
+truffle Ethereum library
+---------------------------------------------------
+//# npm install --save-dev dotenv truffle-wallet-provider ethereumjs-wallet
+# npm install --unsafe-perm=true --allow-root truffle-wallet-provider ethereumjs-wallet
+
+
+---------------------------------------------------
+create & edit
+---------------------------------------------------
+1. truffle.js
+---
+require('dotenv').config();
+const Web3 = require("web3");
+const web3 = new Web3();
+const WalletProvider = require("truffle-wallet-provider");
+const Wallet = require('ethereumjs-wallet');
+
+
+/*
+// get private-key from keystore file
+const Web3 = require("web3");
+const web3 = new Web3();
+const WalletProvider = require("truffle-wallet-provider");
+const Wallet = require('ethereumjs-wallet');
+//const thirdparty = require('ethereumjs-wallet/thirdparty');
+
+const _input = '{"address":"","crypto":""...,"version":3}';
+const _password = "12345678";
+
+const mywallet = Wallet.fromV3(_input, _password);
+const privatekey = mywallet.getPrivateKey();
+
+console.log( "private key = %j", mywallet.getPrivateKey() );
+console.log( "private key = " + privatekey.toString("hex") );
+*/
+// local testnet (private network)
+const LOCALTEST_PRIVATE_KEY = "902a1af83509741f5456161855f6c632417c81b7f2f0983ddedcca129887399c"
+var locatest_privateKey = new Buffer(LOCALTEST_PRIVATE_KEY, "hex")
+var localtest_wallet = Wallet.fromPrivateKey(localtest_privateKey);
+var localtest_provider = new WalletProvider(localtest_wallet, "http://localhost:8545/");
+
+/*
+const MAINNET_PRIVATE_KEY = "902a1af83509741f5456161855f6c632417c81b7f2f0983ddedcca129887399c"
+var mainnet_privateKey = new Buffer(MAINNET_PRIVATE_KEY, "hex")
+var mainnet_wallet = Wallet.fromPrivateKey(mainnet_privateKey);
+var mainnet_provider = new WalletProvider(mainnet_wallet, "http://localhost:8545/");
+*/
+
+
+module.exports = {
+	networks: {
+		development: {
+			host: "localhost",
+			port: 8545,
+			network_id: "*" // Match any network id
+		},
+		localtest: {
+			provider: localtest_provider,
+			//from: "0x...",
+			gas: 4600000,
+			gasPrice: web3.toWei("20", "gwei"),
+			network_id: "3",
+		}
+/*,
+		mainnet: {
+			provider: mainnet_provider,
+			gas: 4600000,
+			gasPrice: web3.toWei("20", "gwei"),
+			network_id: "1",
+		}
+*/
+	}
+};
+---
+
+
+---------------------------------------------------
+build & deploy
+NOTE: you must running ethereum node (private network) before compile the contract
+---------------------------------------------------
+# truffle compile
+# truffle deploy --network localtest
+
+(result)
+Using network 'localtest'.
+
+Running migration: 1_initial_migration.js
+Deploying Migrations...
+... 0x1f377b3c9f28ef069d77c4784493ce158396a4cd9b901bf0bf83cb9ae5516380
+Migrations: 0xf08b1736b2fc636927c0986f26da12ee86fb8bbb
+Saving artifacts...
+Running migration: 2_deploy_abcdefcoin.js
+Deploying AbcdefCoin...
+... 0xb4d7bfed1751c19109b25defe6f7bec5a3f323e599dcb1e1b42706ee0afff894
+AbcdefCoin: 0x1249cda86774bc170cab843437dd37484f173ca8
+Saving artifacts...
+
+
+(geth log)
+...
+INFO [xx-xx|xx:xx:xx.xxx] Setting new local account                address=0xE6E55eed00218faef27EeD24def9208F3878b333
+INFO [xx-xx|xx:xx:xx.xxx] Submitted contract creation              fullhash=0xb4d7bfed1751c19109b25defe6f7bec5a3f323e599dcb1e1b42706ee0afff894 contract=0x1249CDA86774Bc170CAb843437DD37484F173ca8
+INFO [xx-xx|xx:xx:xx.xxx] Successfully sealed new block            number=355 sealhash=f39ace…005bb3 hash=0e4497…90d702 elapsed=1.386s
+...
+
+
+
+
+(Not container all below)
+
+---------------------------------------------------
+TEST: Ethereum Local Testnet
+---------------------------------------------------
+1. build Ethereum (go-ethereum v1.8.26)
+
+$ mkdir /test/eth_test && cd /test/eth_test
+$ wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
+$ tar xzvf go1.10.3.linux-amd64.tar.gz -C /usr/local/
+
+$ echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
+
+$ git clone https://github.com/ethereum/go-ethereum.git -b v1.8.26
+$ cd go-ethereum-1.8.26 && make all
+$ cd .. && ln -s go-ethereum-1.8.26/build/bin/geth .
+
+
+2. creates genesis.json
+
+{
+"alloc": {
+},
+"config": {
+  "chainId": 1000,
+  "homesteadBlock": 0,
+  "byzantiumBlock": 0,
+  "constantinopleBlock": 0,
+  "petersburgBlock": 0,
+  "eip150Block": 0,
+  "eip155Block": 0,
+  "eip158Block": 0
+},
+"nonce": "0x0000000000000033",
+"timestamp": "0x0",
+"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+"gasLimit": "0x8000000",
+"difficulty": "0x10",
+"mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+"coinbase": "0x0000000000000000000000000000000000000000"
+}
+
+
+3. run
+
+$ mkdir /test/eth_test/sync_data
+$ ./geth init --datadir /test/eth_test/sync_data genesis.json
+$ ./geth --networkid 1000 --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool,miner" --syncmode "fast" --cache 4096
+
+$ ./geth attach http://localhost:8545 
+> miner.start(1)
+
+
+---------------------------------------------------
+TEST: ERC-20
+---------------------------------------------------
+method name:
+
+> web3.sha3('name()')
+"0x06fdde0383f15d582d1a74511486c9ddf862a882fb7904b3d9fe9b8b8e58a796"
+-> 0x06fdde03
+> web3.sha3('symbol()')
+"0x95d89b41e2f5f391a79ec54e9d87c79d6e777c63e32c28da95b4e9e4a79250ec"
+-> 0x95d89b41
+> web3.sha3('decimals()')
+"0x313ce567add4d438edf58b94ff345d7d38c45b17dfc0f947988d7819dca364f9"
+-> 0x313ce567
+> web3.sha3('totalSupply()')
+"0x18160ddd7f15c72528c2f94fd8dfe3c8d5aa26e2c50c7d81f4bc7bee8d4b7932"
+-> 0x18160ddd
+> web3.sha3('balanceOf(address)')
+"0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be"
+-> 0x70a08231
+> web3.sha3('transfer(address,uint256)')
+"0xa9059cbb2ab09eb219583f4a59a5d0623ade346d962bcd4e46b11da047c9049b"
+-> 0xa9059cbb
+
+
+AbcdefCoin contract: 0x1249cda86774bc170cab843437dd37484f173ca8
+user #1 ethereum address: 0xe6e55eed00218faef27eed24def9208f3878b333 (ABCDEF owner/creator)
+user #2 ethereum address: 0x8f5b2b7608e3e3a3dc0426c3396420fbf1849454
+
+1. ERC-20 Contract address
+ - name, symbol, decimals, total supply
+
+// name: AbcdefCoin
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1249cda86774bc170cab843437dd37484f173ca8","data":"0x06fdde03"}, "latest"],"id":0}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":0,"result":"0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000a416263646566436f696e00000000000000000000000000000000000000000000"}
+
+// symbol: ABCDEF
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1249cda86774bc170cab843437dd37484f173ca8","data":"0x95d89b41000000000000000000000000BBBB"}, "latest"],"id":0}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":0,"result":"0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000044142434400000000000000000000000000000000000000000000000000000000"}
+
+// decimals: 18
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1249cda86774bc170cab843437dd37484f173ca8","data":"0x313ce567000000000000000000000000BBBB"}, "latest"],"id":0}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":0,"result":"0x0000000000000000000000000000000000000000000000000000000000000012"}
+
+// total supply: 100000 ABCDEF (wei(1e18): 100000 * 1000000000000000000)
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1249cda86774bc170cab843437dd37484f173ca8","data":"0x18160ddd"}, "latest"],"id":0}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":0,"result":"0x00000000000000000000000000000000000000000000152d02c7e14af6800000"}
+
+
+2. ERC-20 Balance: 100000 ABCDEF (user #1, owner/creator)
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1249cda86774bc170cab843437dd37484f173ca8","data":"0x70a08231000000000000000000000000e6e55eed00218faef27eed24def9208f3878b333"}, "latest"],"id":0}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":0,"result":"0x00000000000000000000000000000000000000000000152d02c7e14af6800000"}
+
+
+3. ERC-20 Transfer: user #1 -> user #2 (3000 ABCDEF)
+// amount: 3000 ABCDEF
+> web3.toHex("3000e18")
+"0xa2a15d09519be00000"
+
+// gas limit
+> web3.toHex("60000")
+"0xea60"
+
+// gas price (60000 * 20)
+> web3.toHex("1200000")
+"0x124f80"
+
+// transfer (3000 ABCDEF, user #1 -> user #2)
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xe6e55eed00218faef27eed24def9208f3878b333","to":"0x1249cda86774bc170cab843437dd37484f173ca8","gas":"0xea60","gasPrice":"0x124f80","data":"0xa9059cbb0000000000000000000000008f5b2b7608e3e3a3dc0426c3396420fbf18494540000000000000000000000000000000000000000000000a2a15d09519be00000"}],"id":1}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":1,"result":"0xdc58a5ee5507cff6c2c7df684a73293959646316b2835c8ff36b4eaccd4731af"}
+
+// user #2 balance: 3000 ABCDEF
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1249cda86774bc170cab843437dd37484f173ca8","data":"0x70a082310000000000000000000000008f5b2b7608e3e3a3dc0426c3396420fbf1849454"}, "latest"],"id":0}' -H "Content-Type: application/json" http://127.0.0.1:8545/
+
+result:
+{"jsonrpc":"2.0","id":0,"result":"0x0000000000000000000000000000000000000000000000a2a15d09519be00000"}
+
+
+
+
+
+__EOF__
