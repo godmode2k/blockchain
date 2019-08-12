@@ -33,7 +33,8 @@ $ echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
 $ wget https://github.com/ethereum/go-ethereum/archive/v1.8.21.tar.gz
 $ tar xzvf v1.8.21.tar.gz
 
-$ cmake all
+$ cd go-ethereum-1.8.26
+$ make all
 
 
 // Run node
