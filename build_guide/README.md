@@ -315,10 +315,20 @@ Ripple (XRP)
     https://github.com/ripple/rippled
 
 ```sh
-path: /nodes/xrp_mainnet/rippled-1.2.1
+path: $HOME/rippled-1.4.0
 
+// Dependencies
 $ sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget
 
+// Ubuntu 16.04 LTS
+// GCC 7.4, G++ 7.4
+$ sudo apt-get install -y software-properties-common
+$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+$ sudo apt-get update
+$ sudo apt-get install gcc-7 g++-7
+
+
+$ cd $HOME
 
 // CMake
 $ wget https://github.com/Kitware/CMake/releases/download/v3.13.3/cmake-3.13.3-Linux-x86_64.sh
@@ -332,64 +342,65 @@ $ make
 $ sudo make install
 
 
-// BOOST 1.67.0
-$ wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz
-$ tar xvzf boost_1_67_0.tar.gz
-$ cd boost_1_67_0
+// BOOST 1.71.0
+$ wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+$ tar xvzf boost_1_71_0.tar.gz
+$ cd boost_1_71_0
 $ ./bootstrap.sh
+
+// replace default by custom compiler (GCC, G++ 7.4)
+file: project-config.jam
+#using gcc ; 
+using gcc : 7.4.0 : g++-7 ;
+
 $ ./b2 -j 4
 
-$ export BOOST_ROOT=$HOME/opt/boost
-$ export BOOST_LIBRARYDIR=$HOME/opt/boost/lib
+// ADD to $HOME/.profile
+export BOOST_ROOT=$HOME/boost_1_71_0
+export BOOST_LIBRARYDIR=$HOME/boost_1_71_0/stage/lib
 
 
-// Ripple (v1.2.1)
-$ git clone https://github.com/ripple/rippled.git
-$ cd rippled
-$ git checkout master
-
+// Rippled v1.4.0
+$ wget https://github.com/ripple/rippled/archive/1.4.0.tar.gz
+$ tar xzvf 1.4.0.tar.gz
+$ cd rippled-1.4.0
 $ mkdir my_build
 $ cd my_build
-$ cmake ..
+$ cmake -D CMAKE_C_COMPILER=/usr/bin/gcc-7 -D CMAKE_CXX_COMPILER=/usr/bin/g++-7 -DBOOST_DEBUG=ON ..
 $ cmake --build .
 
 
-$ ln -s ./rippled-1.2.1/my_build/rippled /nodes/xrp_mainnet
-$ cp rippled-1.2.1/cfg/rippled-example.cfg /nodes/xrp_mainnet/sync_data/rippled.cfg
-$ cp rippled-1.2.1/cfg/validators-example.txt /nodes/xrp_mainnet/sync_data/validators.txt
+$ cd $HOME
+$ mkdir sync_data_xrp
+$ ln -s ./rippled-1.4.0/my_build/rippled .
+$ cp ./rippled-1.4.0/cfg/rippled-example.cfg ./sync_data_xrp/rippled.cfg
+$ cp ./rippled-1.4.0/cfg/validators-example.txt ./sync_data_xrp/validators.txt
 
 
-// rippled.cfg
-...
-[node_db]
-#path=/var/lib/rippled/db/rocksdb
-path=/nodes/xrp_mainnet/sync_data/db/rocksdb
-...
-[shard_db]
-type=NuDB
-#path=/var/lib/rippled/db/shards/nudb
-path=/nodes/xrp_mainnet/sync_data/db/shards/nudb
-max_size_gb=???
-...
-[database_path]
-#/var/lib/rippled/db
-/nodes/xrp_mainnet/sync_data/db
-...
-[debug_logfile]
-#/var/log/rippled/debug.log
-/nodes/xrp_mainnet/sync_data/debug.log
-...
+// mainnet
+// rippled.cfg: change host, db, log path
+// validators.txt: change info
+
+// testnet
+// rippled-testnet.cfg: change host, db, log path
+// validators.txt: change info
+
+// local test (standalone)
+// rippled-test.cfg: change host, db, log path
 
 
-// Run node
-/nodes/xrp_mainnet# ./rippled --conf /nodes/xrp_mainnet/sync_data
+
+// Run node (mainnet)
+$ ./rippled --conf $HOME/sync_data_xrp/rippled.cfg
 
 // Client
-/nodes/xrp_mainnet# ./rippled --conf /nodes/xrp_mainnet/sync_data
+$ ./rippled --conf $HOME/sync_data_xrp/rippled.cfg [command] [option]
 
 
-// local testnet
-/nodes/xrp_mainnet# ./rippled --conf /nodes/xrp_mainnet/sync_data -a --start
+// Run node (local test; standalone)
+$ ./rippled --conf $HOME/sync_data_xrp/rippled-test.cfg -a -v --start
+// like creates block
+$ ./rippled --conf $HOME/sync_data_xrp/rippled-test.cfg accept_ledger
 ```
 
 
