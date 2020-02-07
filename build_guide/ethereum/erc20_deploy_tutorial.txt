@@ -11,7 +11,7 @@ Host: go-ethereum, cURL
 
 
 
-$ sudo docker run -it --net=host --name "erc20_deploy" ubuntu bash
+$ sudo docker run -it --net=host --name "erc20_deploy" -v /host/path:container/path ubuntu bash
 
 (container)
 
@@ -49,16 +49,20 @@ create & edit
 ---
 	pragma solidity ^0.4.18;
 	import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+	import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 	contract AbcdefCoin is StandardToken {
 		string public name = "AbcdefCoin"; 
 		string public symbol = "ABCD";
 		uint public decimals = 18;
-		uint public INITIAL_SUPPLY = 1000000 * (10 ** (uint256)decimals);
+		//uint public INITIAL_SUPPLY = 1000000 * (10 ** (uint256)decimals);
+		uint public INITIAL_SUPPLY = 1000000 * (10 ** decimals);
 
 		function AbcdefCoin() public {
 			totalSupply_ = INITIAL_SUPPLY;
+			owner = msg.sender;
 			balances[msg.sender] = INITIAL_SUPPLY;
+			emit Transfer(address(0), msg.sender, INITIAL_SUPPLY);
 		}
 	}
 ---
@@ -100,7 +104,7 @@ const Wallet = require('ethereumjs-wallet');
 //const thirdparty = require('ethereumjs-wallet/thirdparty');
 
 const _input = '{"address":"","crypto":""...,"version":3}';
-const _password = "12345678";
+const _password = "<password>";
 
 const mywallet = Wallet.fromV3(_input, _password);
 const privatekey = mywallet.getPrivateKey();
@@ -109,13 +113,13 @@ console.log( "private key = %j", mywallet.getPrivateKey() );
 console.log( "private key = " + privatekey.toString("hex") );
 */
 // local testnet (private network)
-const LOCALTEST_PRIVATE_KEY = "902a1af83509741f5456161855f6c632417c81b7f2f0983ddedcca129887399c"
-var locatest_privateKey = new Buffer(LOCALTEST_PRIVATE_KEY, "hex")
+const LOCALTEST_PRIVATE_KEY = "<private key>"
+var localtest_privateKey = new Buffer(LOCALTEST_PRIVATE_KEY, "hex")
 var localtest_wallet = Wallet.fromPrivateKey(localtest_privateKey);
 var localtest_provider = new WalletProvider(localtest_wallet, "http://localhost:8545/");
 
 /*
-const MAINNET_PRIVATE_KEY = "902a1af83509741f5456161855f6c632417c81b7f2f0983ddedcca129887399c"
+const MAINNET_PRIVATE_KEY = "<private key>"
 var mainnet_privateKey = new Buffer(MAINNET_PRIVATE_KEY, "hex")
 var mainnet_wallet = Wallet.fromPrivateKey(mainnet_privateKey);
 var mainnet_provider = new WalletProvider(mainnet_wallet, "http://localhost:8545/");
@@ -135,10 +139,10 @@ module.exports = {
 			gas: 4600000,
 
 			// web3 version < v1.0.0; v0.18.3 here
-			gasPrice: web3.toWei("20", "gwei"),
+			//gasPrice: web3.toWei("20", "gwei"),
 
 			// web3 version > v1.0.0
-			//gasPrice: web3.utils.toWei("20", "gwei"),
+			gasPrice: web3.utils.toWei("20", "gwei"),
 
 			network_id: "*",
 		}
@@ -146,7 +150,15 @@ module.exports = {
 		mainnet: {
 			provider: mainnet_provider,
 			gas: 4600000,
-			gasPrice: web3.toWei("20", "gwei"),
+
+			//gasPrice: web3.toWei("20", "gwei"),
+
+			// web3 version < v1.0.0; v0.18.3 here
+			//gasPrice: web3.toWei("20", "gwei"),
+
+			// web3 version > v1.0.0
+			gasPrice: web3.utils.toWei("20", "gwei"),
+
 			network_id: "1",
 		}
 */
@@ -235,6 +247,8 @@ $ cd .. && ln -s go-ethereum-1.8.26/build/bin/geth .
 $ mkdir /test/eth_test/sync_data
 $ ./geth init --datadir /test/eth_test/sync_data genesis.json
 $ ./geth --networkid 1000 --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool,miner" --syncmode "fast" --cache 4096
+// v1.9.x (with --allow-insecure-unlock)
+// $ ./geth --networkid 1000 --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool,miner" --syncmode "fast" --cache 4096 --allow-insecure-unlock
 
 $ ./geth attach http://localhost:8545 
 > miner.start(1)
