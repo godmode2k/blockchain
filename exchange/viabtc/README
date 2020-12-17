@@ -5,6 +5,18 @@ ViaBTC build & HTTP-RPC API test guide
 
 
 --------------------------------------------
+Directory tree
+Base dir: viabtc_exchange
+--------------------------------------------
+viabtc_exchange
+    /kafka-docker
+    /librdkafka
+    /redis-sentinel
+    /viabtc_exchange_server
+
+
+
+--------------------------------------------
 ViaBTC
 --------------------------------------------
 https://github.com/viabtc/viabtc_exchange_server
@@ -35,6 +47,7 @@ $ git clone https://github.com/wurstmeister/kafka-docker.git
 or
 
 $ sudo docker pull wurstmeister/kafka
+$ sudo docker-compose up -d
 
 
 
@@ -93,18 +106,23 @@ volumes:
 // ]
 
 
+// backup all sentinel*.conf
+$ mkdir backup && cp sentinel*.conf ./backup
 $ chmod 666 sentinel*.conf
-$ sudo docker-compose up
+$ sudo docker-compose up -d
 ...
-$ "CTRL + C" to quit
 
 
-// edit sentinel1.conf, sentinel2.conf, sentinel3.conf [
-my_redis_master {replace IP -> 127.0.0.1:xxxx}
-// ]
-
-
-$ sudo docker-compose up
+// Issue:
+// if doesn't work after stop 'redis' or all service processes:
+// - the 'marketprice' process doesn't connect to 'redis' after restart (stop->start)
+//   all service processes (matchengine, alertcenter, readhistory, accesshttp, accessws, marketprice).
+// you can try this.
+(reboot) // if doesn't work below way, reboot first then try this.
+$ rm -f sentinel*.conf
+$ cp ./backup/sentinel*.conf .
+$ chmod 666 sentinel*.conf
+$ sudo docker-compose up -d
 
 
 
@@ -133,6 +151,7 @@ $ ln -s ./src ./librdkafka
 
 // MySQL
 $ sudo docker pull mysql
+$ sudo docker run -d -E MYSQL_ROOT_PASSWORD="..." mysql:<tag>
 
 
 
@@ -146,10 +165,20 @@ $ sudo docker pull redis
 
 
 
+// config.json
+// Edit <'log path', 'DB info', ...>
+// for all service processes (matchengine, alertcenter, readhistory, accesshttp, accessws, marketprice)
+
+
+
 // Imports SQL schema
+//  - if has an error, insert 'USE trade_history; or USE trade_log;' below 'CREATE database <trade_...>;'
+//
+// Edit <DB info> for 'init_trade_history.sh'
+//
 $ mysql -h 127.0.0.1 -u root -p < create_trade_history.sql
 $ mysql -h 127.0.0.1 -u root -p < create_trade_log.sql
-$ init_trade_history.sh
+$ init_trade_history.sh // DB info required
 
 
 
@@ -157,11 +186,13 @@ $ init_trade_history.sh
 $ cd depends/hiredis && make
 $ cd network && make
 
+
 $ cd utils
 // edit makefile [
 INCS = ... -I ../depends -I ../../librdkafka
 // ]
 $ make
+
 
 $ cd accesshttp
 // edit makefile [
@@ -170,12 +201,14 @@ LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
 // ]
 $ make
 
+
 $ cd accessws
 // edit makefile [
 INCS = ... -I ../depends -I ../../librdkafka
 LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -lcurl
 // ]
 $ make
+
 
 $ cd alertcenter
 // edit makefile [
@@ -184,12 +217,14 @@ LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
 // ]
 $ make
 
+
 $ cd marketprice
 // edit makefile [
 INCS = ... -I ../depends -I ../../librdkafka
 LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
 // ]
 $ make
+
 
 $ cd matchengine
 // edit makefile [
@@ -198,6 +233,13 @@ LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -lrdkafka -l
 // ]
 $ make
 
+// Edit 'restart.sh' for matchengine
+// replace
+// ./matchengine/matchengine.exe ./matchengine/config.json 
+// by
+// LD_PRELOAD=../librdkafka/src/librdkafka.so ./matchengine/matchengine.exe ./matchengine/config.json 
+
+
 $ cd readhistory
 // edit makefile [
 INCS = ... -I ../depends -I ../../librdkafka
@@ -205,12 +247,14 @@ LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -lrdkafka -l
 // ]
 $ make
 
+
 $ cd test/marketprice
 // edit makefile [
 INCS = ... -I ../../depends -I ../../../librdkafka
 LIBS = ... -L ../../depends/hiredis -L ../../../librdkafka/librdkafka
 // ]
 $ make
+
 
 $ cd test/matchengine && make
 $ cd test/utils && make
