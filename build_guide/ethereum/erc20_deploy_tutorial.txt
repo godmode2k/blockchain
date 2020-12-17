@@ -80,7 +80,9 @@ create & edit
 truffle Ethereum library
 ---------------------------------------------------
 //# npm install --save-dev dotenv truffle-wallet-provider ethereumjs-wallet
-# npm install --unsafe-perm=true --allow-root truffle-wallet-provider ethereumjs-wallet
+//# npm install --unsafe-perm=true --allow-root truffle-wallet-provider ethereumjs-wallet
+// https://github.com/ethereumjs/ethereumjs-wallet/releases
+# npm install --unsafe-perm=true --allow-root truffle-wallet-provider ethereumjs-wallet@0.6.4
 # npm install --unsafe-perm=true --allow-root web3 // if compile error occured (required web3)
 
 
@@ -136,28 +138,32 @@ module.exports = {
 		localtest: {
 			provider: localtest_provider,
 			//from: "0x...",
-			gas: 4600000,
+			gas: 70000,
 
 			// web3 version < v1.0.0; v0.18.3 here
-			//gasPrice: web3.toWei("20", "gwei"),
+			//gasPrice: web3.toWei("100", "gwei"),
 
 			// web3 version > v1.0.0
-			gasPrice: web3.utils.toWei("20", "gwei"),
+			gasPrice: web3.utils.toWei("100", "gwei"),
 
-			network_id: "*",
+			//network_id: "*",
+
+            // USE this if doesn't work
+            // SEE below: $ ./geth --networkid 1000 ...
+			network_id: "1000",
 		}
 /*,
 		mainnet: {
 			provider: mainnet_provider,
-			gas: 4600000,
+			gas: 70000,
 
 			//gasPrice: web3.toWei("20", "gwei"),
 
 			// web3 version < v1.0.0; v0.18.3 here
-			//gasPrice: web3.toWei("20", "gwei"),
+			//gasPrice: web3.toWei("100", "gwei"),
 
 			// web3 version > v1.0.0
-			gasPrice: web3.utils.toWei("20", "gwei"),
+			gasPrice: web3.utils.toWei("100", "gwei"),
 
 			network_id: "1",
 		}
