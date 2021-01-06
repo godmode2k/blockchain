@@ -7,7 +7,9 @@ ViaBTC build & HTTP-RPC API test guide
 --------------------------------------------
 Environment
 --------------------------------------------
-OS: Ubuntu 16.04 LTS x86_64
+OS:
+ - Ubuntu 16.04 LTS x86_64
+ - Ubuntu 20.04 LTS x86_64 (with MySQL 8.x)
 
 
 
@@ -62,10 +64,10 @@ $ sudo docker-compose up -d
 
 
 
---------------------------------------------
-Redis
---------------------------------------------
-$ sudo docker pull redis
+//--------------------------------------------
+//Redis
+//--------------------------------------------
+//$ sudo docker pull redis
 
 
 
@@ -187,6 +189,9 @@ $ ./configure
 $ make
 $ ln -s ./src ./librdkafka
 
+// Ubuntu 20.04: python3 installed only (there's no symlink /usr/bin/python)
+$ sudo ln -s /usr/bin/python3 /usr/bin/python
+
 
 
 // MySQL
@@ -223,6 +228,12 @@ $ init_trade_history.sh // DB info required
 
 
 // === build === [
+// Ubuntu 20.04: gcc-9
+// edit makefile.inc [
+// add to CFLAGS: "-fPIC"
+CFLAGS  := -Wall -Wno-strict-aliasing -Wno-uninitialized -g -rdynamic -std=gnu99 -fPIC
+// ]
+
 $ cd depends/hiredis && make
 $ cd network && make
 
@@ -231,6 +242,10 @@ $ cd utils
 // edit makefile [
 INCS = ... -I ../depends -I ../../librdkafka
 // ]
+// MySQL 8.x: replace "my_bool" by "int" [
+// edit ut_mysql.c
+// my_bool reconnect = 1; -> int reconnect = 1;
+// ]
 $ make
 
 
@@ -238,6 +253,8 @@ $ cd accesshttp
 // edit makefile [
 INCS = ... -I ../depends -I ../../librdkafka
 LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ...
+// Ubuntu 20.04: add "-llz4"
+// LIBS = ... -L ../depends/hiredis -L ../../librdkafka/librdkafka ... -llz4 ...
 // ]
 $ make
 
