@@ -423,7 +423,7 @@ $ ./rippled --conf $HOME/sync_data_xrp/rippled-test.cfg accept_ledger
 
 
 
-Dogecoin (XRP)
+Dogecoin (DOGE)
 ----------
     https://github.com/dogecoin/dogecoin
 
