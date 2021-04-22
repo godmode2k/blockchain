@@ -3,7 +3,7 @@
 
 Summary
 ----------
-> Build a BTC/ETH/DSH/QTUM/XVG/XRP/...
+> Build a BTC/ETH/DSH/QTUM/XVG/XRP/DOGE/...
 > - hjkim, 2018.11.13
 
 
@@ -11,7 +11,7 @@ Environment
 ----------
 > build all and tested on GNU/Linux
 
-    GNU/Linux: Ubuntu 16.04_x64 LTS
+    GNU/Linux: Ubuntu 16.04_x64 LTS, 20.04_x64 LTS
 
 
 Ethereum (ETH)
@@ -22,23 +22,30 @@ Ethereum (ETH)
 ```sh
 path: /nodes/eth_mainnet/
 
-$ wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
-$ tar xzvf go1.10.3.linux-amd64.tar.gz -C /usr/local/
+//(old version)
+//$ wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
+//$ tar xzvf go1.10.3.linux-amd64.tar.gz -C /usr/local/
+
+$ wget https://golang.org/dl/go1.16.linux-amd64.tar.gz
+$ tar -C /usr/local -xzf go1.16.linux-amd64.tar.gz
 $ echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
 
 // Unstable version
 //$ git clone https://github.com/ethereum/go-ethereum.git
 
 // Release version
-$ wget https://github.com/ethereum/go-ethereum/archive/v1.8.21.tar.gz
-$ tar xzvf v1.8.21.tar.gz
+//$ wget https://github.com/ethereum/go-ethereum/archive/v1.8.21.tar.gz
+//$ wget https://github.com/ethereum/go-ethereum/archive/v1.8.26.tar.gz
+$ wget https://github.com/ethereum/go-ethereum/archive/refs/tags/v1.10.2.tar.gz
 
-$ cd go-ethereum-1.8.26
+$ tar xzvf v1.10.2.tar.gz
+$ cd go-ethereum-1.10.2
 $ make all
 
 
 // Run node
-/nodes/eth_mainnet# nohup ./geth --rpc --rpcport 8080 --rpccorsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool" --syncmode "fast" --cache 4096 &
+// v1.9.x ~ (with --allow-insecure-unlock)
+/nodes/eth_mainnet# nohup ./geth --rpc --rpcport 8080 --rpccorsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool" --syncmode "fast" --cache 4096 --allow-insecure-unlock &
 
 // Client
 /nodes/eth_mainnet# ./geth attach http://localhost:8080
@@ -50,10 +57,14 @@ Bitcoin (BTC)
 ----------
     https://github.com/bitcoin/bitcoin
 
-    download: released bitcoin-0.16.0{3}
+    download: released bitcoin-0.16.0{3}, 0.20.1, ...
 
 ```sh
 path: /nodes/btc_mainnet/bitcoin-0.16.0{3}
+
+// v0.21.0
+$ wget https://github.com/bitcoin/bitcoin/archive/refs/rags/v0.21.0.tar.gz
+
 
 // dependencies
 $ sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev
@@ -75,6 +86,13 @@ $ ./configure LDFLAGS="-L/nodes/btc_mainnet/bitcoin-0.16.0/db4/lib/" CPPFLAGS="-
 $ make -s -j6
 
 
+// v0.21.0
+$ ./autogen.sh
+$ ./configure LDFLAGS="-L/nodes/btc_mainnet/bitcoin-0.21.0/db4/lib/" CPPFLAGS="-I/nodes/btc_mainnet/bitcoin-0.21.0/db4/include/" --enable-bitcore-rpc
+$ make -s -j6
+
+
+
 [bitcoin.conf]
 rpcuser=
 rpcpassword=
@@ -91,12 +109,12 @@ listen=1
 /nodes/btc_mainnet# ./bitcoind -daemon -datadir=/nodes/btc_mainnet/sync_data
 
 // Client
-/nodes/btc_mainnet# ./bitcoin-cli -datadir=/nodes/btc_mainnet/sync_data
+/nodes/btc_mainnet# ./bitcoin-cli -datadir=/nodes/btc_mainnet/sync_data -rpcwallet=<walletname>
 ```
 
 
 
-DASH (DSH)
+DASH (DSH) old
 ----------
     https://github.com/dashpay/dash
 
@@ -250,7 +268,7 @@ listen=1
 /nodes/qtum_mainnet# ./qtumd -daemon -datadir=/nodes/qtum_mainnet/sync_data
 
 // Client
-/nodes/qtum_mainnet# ./qtum-cli -datadir=/nodes/qtum_mainnet/sync_data
+/nodes/qtum_mainnet# ./qtum-cli -datadir=/nodes/qtum_mainnet/sync_data -rpcwallet=<walletname>
 ```
 
 
@@ -401,6 +419,112 @@ $ ./rippled --conf $HOME/sync_data_xrp/rippled.cfg [command] [option]
 $ ./rippled --conf $HOME/sync_data_xrp/rippled-test.cfg -a -v --start
 // like creates block
 $ ./rippled --conf $HOME/sync_data_xrp/rippled-test.cfg accept_ledger
+```
+
+
+
+Dogecoin (XRP)
+----------
+    https://github.com/dogecoin/dogecoin
+
+```sh
+
+$ cd $HOME
+
+// Dependency
+$ sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev
+$ sudo apt-get install libprotobuf-dev protobuf-compiler
+$ sudo apt-get install libqrencode-dev openssl libevent-dev
+$ sudo apt-get install libminiupnpc-dev
+
+
+// Berkeley DB 5.1.29
+$ wget http://download.oracle.com/berkeley-db/db-5.1.29.NC.tar.gz
+$ tar xzvf db-5.1.29.NC.tar.gz
+$ cd db-5.1.29.NC/build_unix
+$ ../dist/configure prefix=$HOME/db5 --enable-cxx
+$ make
+
+
+Error:
+../src/dbinc/atomic.h:179:19: error: definition of ‘int __atomic_compare_exchange(db_atomic_t*, atomic_value_t, atomic_value_t)’ ambiguates built-in declaration ‘bool __atomic_compare_exchange(long unsigned int, volatile void*, void*, void*, int, int)’
+  179 | static inline int __atomic_compare_exchange(
+      |                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+make: *** [Makefile:2283: cxx_db.lo] Error 1
+
+
+FIX: db-5.1.29.NC/src/dbinc/atomic.h
+
+Line 147: replace
+
+(before)
+__atomic_compare_exchange((p), (o), (n))
+
+(after)
+__atomic_compare_exchange_new((p), (o), (n))
+
+
+Line 179: replace
+
+(before)
+static inline int __atomic_compare_exchange(
+
+(after)
+static inline int __atomic_compare_exchange_new(
+
+
+$ make
+$ make install
+
+
+
+// Boost library
+$ sudo apt-get install libboost-all-dev
+
+or
+
+build source code
+
+// GCC 7.4, G++ 7.4
+$ sudo apt-get install -y software-properties-common
+$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+$ sudo apt-get update
+$ sudo apt-get install gcc-7 g++-7
+
+$ cd $HOME
+
+// BOOST 1.71.0
+$ wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+$ tar xvzf boost_1_71_0.tar.gz
+$ cd boost_1_71_0
+$ ./bootstrap.sh
+
+// replace default by custom compiler (GCC, G++ 7.4)
+file: project-config.jam
+#using gcc ; 
+using gcc : 7.4.0 : g++-7 ;
+
+$ ./b2 -j 4
+
+// ADD to $HOME/.profile
+export BOOST_ROOT=$HOME/boost_1_71_0
+export BOOST_LIBRARYDIR=$HOME/boost_1_71_0/stage/lib
+
+
+
+// Dogecoin build
+$ wget https://github.com/dogecoin/dogecoin/archive/refs/tags/v1.14.3.tar.gz
+$ cd dogecoin-1.14.3
+$ ./autogen.sh
+
+// with boost v1.71.0, Berkeley-DB 5.1.29 NC
+$ ./configure LDFLAGS="-L$HOME/db5/lib" CPPFLAGS="-I$HOME/db5/include/ -I$HOME/boost_1_71_0" --with-boost-libdir=$HOME/boost_1_71_0/stage/lib/
+
+$ make -s -j5
+
+or
+
+$ make -s -j<number of jobs>
 ```
 
 
