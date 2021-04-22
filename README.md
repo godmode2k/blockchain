@@ -17,7 +17,7 @@ build_guide
 ----------
 ```sh
 Blockchain Node build guide
- - Bitcoin (BTC), Ethereum (ETH), Dash (DSH), Qtum (QTUM), Verge (XVG), Ripple (XRP)
+ - Bitcoin (BTC), Ethereum (ETH), Dash (DSH), Qtum (QTUM), Verge (XVG), Ripple (XRP), Dogecoin (DOGE)
 
 eos: EOS (EOS) build guide & test
 
