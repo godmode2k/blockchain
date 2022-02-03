@@ -1,4 +1,6 @@
-Ethereum Token create & deploy test
+# Ethereum Token create & deploy test
+
+SEE
 ----------
 > ERC-20: erc20_deploy_tutorial.txt and new_token.sh </br>
 > ERC-1155: erc20_deploy_tutorial.txt and new_token_erc1155.sh
