@@ -1,6 +1,8 @@
 Ethereum ERC-20 Token: create & deploy test
  - hjkim, 2019.08.08
 
+updated: 2022.02.02
+
 
 
 ---------------------------------------------------
@@ -24,50 +26,84 @@ $ sudo docker run -it --net=host --name "erc20_deploy" -v /host/path:container/p
 ---------------------------------------------------
 nodejs
 ---------------------------------------------------
-# wget https://nodejs.org/dist/v10.16.2/node-v10.16.2-linux-x64.tar.xz
-# tar xJvf node-v10.16.2-linux-x64.tar.xz
-# export PATH=`pwd`/node-v10.16.2-linux-x64/bin:$PATH
-# echo export PATH=`pwd`/node-v10.16.2-linux-x64/bin:$PATH >> $HOME/.profile
-# echo export PATH=`pwd`/node-v10.16.2-linux-x64/bin:$PATH >> $HOME/.bashrc
+$ wget https://nodejs.org/dist/v16.13.2/node-v16.13.2-linux-x64.tar.xz
+$ tar xJvf node-v16.13.2-linux-x64.tar.xz
+$ export PATH=`pwd`/node-v16.13.2-linux-x64/bin:$PATH
+$ echo export PATH=`pwd`/node-v16.13.2-linux-x64/bin:$PATH >> $HOME/.profile
+$ echo export PATH=`pwd`/node-v16.13.2-linux-x64/bin:$PATH >> $HOME/.bashrc
 
 
 ---------------------------------------------------
 truffle, zeppelin-solidity
 ---------------------------------------------------
-# npm install --unsafe-perm=true --allow-root -g truffle@4.1.15
+# npm uninstall -g truffle
+# npm install -g truffle
+#
+#
+# Error:  *** Deployment Failed ***
+# "Migrations" -- Web3ProviderEngine does not support synchronous requests..
+#
+# USE THIS (2022.02.02 currently) if errors occur like above.
+# npm install --unsafe-perm=true --allow-root -g truffle@5.3.0
+#
+#
 # mkdir test && cd test
 # truffle init
 # npm init
-# npm install zeppelin-solidity
+# //npm install zeppelin-solidity
+# //npm install openzeppelin-solidity
+# npm install @openzeppelin/contracts
 
 
 ---------------------------------------------------
 create & edit
  - contract
 ---------------------------------------------------
-1. contracts/MyCoin.sol
+1. contracts/AbcdefCoin.sol
 ---
-	pragma solidity ^0.4.18;
-	import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-	import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+/*
+// ERC-20: v0.4.x
+pragma solidity ^0.4.18;
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-	contract AbcdefCoin is StandardToken {
-		string public name = "AbcdefCoin"; 
-		string public symbol = "ABCD";
-		uint public decimals = 18;
-		//uint public INITIAL_SUPPLY = 1000000 * (10 ** (uint256)decimals);
-		uint public INITIAL_SUPPLY = 1000000 * (10 ** decimals);
+contract AbcdefCoin is StandardToken {
+    string public name = "AbcdefCoin"; 
+    string public symbol = "ABCD";
+    uint public decimals = 18;
+    //uint public INITIAL_SUPPLY = 1000000 * (10 ** (uint256)decimals);
+    uint public INITIAL_SUPPLY = 1000000 * (10 ** decimals);
 
-		function AbcdefCoin() public {
-			totalSupply_ = INITIAL_SUPPLY;
-			owner = msg.sender;
-			balances[msg.sender] = INITIAL_SUPPLY;
-			emit Transfer(address(0), msg.sender, INITIAL_SUPPLY);
-		}
-	}
+    function AbcdefCoin() public {
+        totalSupply_ = INITIAL_SUPPLY;
+        owner = msg.sender;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(address(0), msg.sender, INITIAL_SUPPLY);
+    }
+}
+*/
+
+
+// ERC-20: v0.8.x
+pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract AbcdefCoin is ERC20 {
+    string public __name = "AbcdefCoin";
+    string public __symbol = "ABCD";
+    uint public __decimals = 18;
+    //uint public INITIAL_SUPPLY = 1000000 * (10 ** (uint256)__decimals);
+    uint public __INITIAL_SUPPLY = 1000000 * (10 ** __decimals);
+
+    constructor() ERC20(__name, __symbol) {
+        _mint(msg.sender, __INITIAL_SUPPLY);
+        emit Transfer(address(0), msg.sender, __INITIAL_SUPPLY);
+    }
+}
+
 ---
 
-2. migrations/2_deploy_mycoin.js
+2. migrations/2_deploy_AbcdefCoin.js
 ---
 	var AbcdefCoin = artifacts.require("./AbcdefCoin.sol");
 	module.exports = function(deployer) {
@@ -129,6 +165,13 @@ var mainnet_provider = new WalletProvider(mainnet_wallet, "http://localhost:8545
 
 
 module.exports = {
+    compilers: {
+        solc: {
+        //version: "0.4.18",
+        version: "0.8.2",
+        }
+    },
+
 	networks: {
 		development: {
 			host: "localhost",
@@ -138,7 +181,7 @@ module.exports = {
 		localtest: {
 			provider: localtest_provider,
 			//from: "0x...",
-			gas: 70000,
+			gas: 4600000,
 
 			// web3 version < v1.0.0; v0.18.3 here
 			//gasPrice: web3.toWei("100", "gwei"),
@@ -210,17 +253,17 @@ INFO [xx-xx|xx:xx:xx.xxx] Successfully sealed new block            number=355 se
 ---------------------------------------------------
 TEST: Ethereum Local Testnet
 ---------------------------------------------------
-1. build Ethereum (go-ethereum v1.8.26)
+1. build Ethereum (go-ethereum v1.10.15)
 
 $ mkdir /test/eth_test && cd /test/eth_test
-$ wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
-$ tar xzvf go1.10.3.linux-amd64.tar.gz -C /usr/local/
+$ wget https://dl.google.com/go/go1.15.5.linux-amd64.tar.gz
+$ tar xzvf go1.15.5.linux-amd64.tar.gz -C /usr/local/
 
 $ echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
 
-$ git clone https://github.com/ethereum/go-ethereum.git -b v1.8.26
-$ cd go-ethereum-1.8.26 && make all
-$ cd .. && ln -s go-ethereum-1.8.26/build/bin/geth .
+$ git clone https://github.com/ethereum/go-ethereum.git -b v1.10.15
+$ cd go-ethereum-1.10.15 && make all
+$ cd .. && ln -s go-ethereum-1.10.15/build/bin/geth .
 
 
 2. creates genesis.json
@@ -250,11 +293,57 @@ $ cd .. && ln -s go-ethereum-1.8.26/build/bin/geth .
 
 3. run
 
+// node #1
 $ mkdir /test/eth_test/sync_data
 $ ./geth init --datadir /test/eth_test/sync_data genesis.json
-$ ./geth --networkid 1000 --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool,miner" --syncmode "fast" --cache 4096
+
+// node #2
+$ mkdir /test/eth_test/sync_data2
+$ ./geth init --datadir /test/eth_test/sync_data2 genesis.json
+
+// node #3
+$ mkdir /test/eth_test/sync_data3
+$ ./geth init --datadir /test/eth_test/sync_data3 genesis.json
+
+
+// data dir: /test/eth_test/sync_data
+static-nodes.json
+[
+"enode://<node2>...@ip:port",
+"enode://<node3>...@ip:port"
+]
+
+// data dir: /test/eth_test/sync_data2
+static-nodes.json
+[
+"enode://<node1>...@ip:port",
+]
+
+// data dir: /test/eth_test/sync_data3
+static-nodes.json
+[
+"enode://<node1>...@ip:port",
+]
+
+
+
+//$ ./geth --networkid 1000 --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool,miner" --syncmode "fast" --cache 4096
+
 // v1.9.x (with --allow-insecure-unlock)
 // $ ./geth --networkid 1000 --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool,miner" --syncmode "fast" --cache 4096 --allow-insecure-unlock
+
+// go-ethereum-1.10.15
+//
+// node1
+$ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock
+
+// node2
+$ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /test/eth_test/sync_data2 --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock
+
+// node3
+$ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /test/eth_test/sync_data3 --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock
+
+
 
 $ ./geth attach http://localhost:8545 
 > miner.start(1)
@@ -262,6 +351,7 @@ $ ./geth attach http://localhost:8545
 
 ---------------------------------------------------
 TEST: ERC-20
+-> SEE new_token.sh
 ---------------------------------------------------
 method name:
 
@@ -348,8 +438,6 @@ $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x1
 
 result:
 {"jsonrpc":"2.0","id":0,"result":"0x0000000000000000000000000000000000000000000000a2a15d09519be00000"}
-
-
 
 
 
