@@ -1,6 +1,7 @@
 Ethereum Token create & deploy test
 ----------
-> ERC-20: erc20_deploy_tutorial.txt </br>
+> ERC-20: erc20_deploy_tutorial.txt and new_token.sh </br>
+> ERC-1155: erc20_deploy_tutorial.txt and new_token_erc1155.sh
 
 
 Environment
@@ -35,5 +36,9 @@ Run
 ERC-20
 $ yes "" | sh ./new_token.sh [Token Name] [Token Symbol] [Token Decimals] [Token Total Supply]
 e.g., yes "" | sh new_token.sh ABCToken ABC 18 10000
+
+ERC-1155
+$ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: ] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]
+e.g., $ yes "" | bash new_token_erc1155.sh ABCToken 0,1 A,B 10**18,1 https://127.0.0.1/api/token
 ```
 
