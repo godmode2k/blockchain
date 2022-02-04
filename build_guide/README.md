@@ -36,19 +36,121 @@ $ echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
 // Release version
 //$ wget https://github.com/ethereum/go-ethereum/archive/v1.8.21.tar.gz
 //$ wget https://github.com/ethereum/go-ethereum/archive/v1.8.26.tar.gz
-$ wget https://github.com/ethereum/go-ethereum/archive/refs/tags/v1.10.2.tar.gz
+//$ wget https://github.com/ethereum/go-ethereum/archive/refs/tags/v1.10.2.tar.gz
+$ wget https://github.com/ethereum/go-ethereum/archive/refs/tags/v1.10.15.tar.gz
 
-$ tar xzvf v1.10.2.tar.gz
-$ cd go-ethereum-1.10.2
+$ tar xzvf v1.10.15.tar.gz
+$ cd go-ethereum-1.10.15
 $ make all
 
 
 // Run node
 // v1.9.x ~ (with --allow-insecure-unlock)
-/nodes/eth_mainnet# nohup ./geth --rpc --rpcport 8080 --rpccorsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool" --syncmode "fast" --cache 4096 --allow-insecure-unlock &
+///nodes/eth_mainnet# nohup ./geth --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool" --syncmode "fast" --cache 4096 --allow-insecure-unlock &
+
+// go-ethereum-1.10.15
+/nodes/eth_mainnet# nohup ./geth --http --http.port 8544 --http.corsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock &
+
 
 // Client
-/nodes/eth_mainnet# ./geth attach http://localhost:8080
+/nodes/eth_mainnet# ./geth attach http://localhost:8545
+
+
+
+--------------------------
+Private Network
+--------------------------
+1. build Ethereum (go-ethereum v1.10.15)
+
+$ mkdir /test/eth_test && cd /test/eth_test
+$ wget https://dl.google.com/go/go1.15.5.linux-amd64.tar.gz
+$ tar xzvf go1.15.5.linux-amd64.tar.gz -C /usr/local/
+
+$ echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
+
+$ git clone https://github.com/ethereum/go-ethereum.git -b v1.10.15
+$ cd go-ethereum-1.10.15 && make all
+$ cd .. && ln -s go-ethereum-1.10.15/build/bin/geth .
+
+
+2. creates genesis.json
+
+{
+"alloc": {
+},
+"config": {
+  "chainId": 1000,
+  "homesteadBlock": 0,
+  "byzantiumBlock": 0,
+  "constantinopleBlock": 0,
+  "petersburgBlock": 0,
+  "eip150Block": 0,
+  "eip155Block": 0,
+  "eip158Block": 0
+},
+"nonce": "0x0000000000000033",
+"timestamp": "0x0",
+"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+"gasLimit": "0x8000000",
+"difficulty": "0x10",
+"mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+"coinbase": "0x0000000000000000000000000000000000000000"
+}
+
+
+3. run
+
+// node #1
+$ mkdir /test/eth_test/sync_data
+$ ./geth init --datadir /test/eth_test/sync_data genesis.json
+
+// node #2
+$ mkdir /test/eth_test/sync_data2
+$ ./geth init --datadir /test/eth_test/sync_data2 genesis.json
+
+// node #3
+$ mkdir /test/eth_test/sync_data3
+$ ./geth init --datadir /test/eth_test/sync_data3 genesis.json
+
+
+// data dir: /test/eth_test/sync_data
+static-nodes.json
+[
+"enode://<node2>...@ip:port",
+"enode://<node3>...@ip:port"
+]
+
+// data dir: /test/eth_test/sync_data2
+static-nodes.json
+[
+"enode://<node1>...@ip:port",
+]
+
+// data dir: /test/eth_test/sync_data3
+static-nodes.json
+[
+"enode://<node1>...@ip:port",
+]
+
+
+
+// Run
+// go-ethereum-1.10.15
+//
+// node1
+$ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /test/eth_test/sync_data --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock
+
+// node2
+$ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /test/eth_test/sync_data2 --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock
+
+// node3
+$ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /test/eth_test/sync_data3 --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock
+
+
+// Client
+$ ./geth attach http://localhost:8545 
+> miner.start(1)
+> miner.stop()
 ```
 
 
