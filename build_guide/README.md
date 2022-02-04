@@ -49,7 +49,7 @@ $ make all
 ///nodes/eth_mainnet# nohup ./geth --rpc --rpcport 8545 --rpccorsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --rpcapi "db,eth,net,web3,personal,txpool" --syncmode "fast" --cache 4096 --allow-insecure-unlock &
 
 // go-ethereum-1.10.15
-/nodes/eth_mainnet# nohup ./geth --http --http.port 8544 --http.corsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock &
+/nodes/eth_mainnet# nohup ./geth --http --http.port 8545 --http.corsdomain "*" --datadir /nodes/eth_mainnet/sync_data --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --syncmode "snap" --cache 4096 --allow-insecure-unlock &
 
 
 // Client
@@ -148,7 +148,7 @@ $ ./geth --networkid 1000 --nodiscover --http --http.addr 0.0.0.0 --http.port 85
 
 
 // Client
-$ ./geth attach http://localhost:8545 
+$ ./geth attach http://localhost:8544
 > miner.start(1)
 > miner.stop()
 ```
