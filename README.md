@@ -21,7 +21,7 @@ Blockchain Node build guide
 
 eos: EOS (EOS) build guide & test
 
-ethereum: Ethereum ERC-20 Token Create & Deploy test
+ethereum: Ethereum ERC-20, ERC-1155 (NFT, FT) Token Create & Deploy test
 ```
 
 
