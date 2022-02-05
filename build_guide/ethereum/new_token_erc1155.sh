@@ -54,8 +54,8 @@
 #    console.log( "private key = " + privatekey.toString("hex") );
 #
 # 3. run
-#     $ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: ] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]
-#     e.g., $ yes "" | bash new_token_erc1155.sh ABCToken 0,1 A,B 10**18,1 https://127.0.0.1/api/token
+#     $ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]
+#     e.g., $ yes "" | bash new_token_erc1155.sh ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token
 # -----------------------------------------------------------------
 #
 
@@ -70,8 +70,8 @@ TOKEN_IDS_TOTAL_SUPPLY=$4
 TOKEN_IDS_URL=$5
 
 if [ -z $TOKEN_NAME ] || [ -z $TOKEN_IDS_NAMES ] || [ -z $TOKEN_IDS ] || [ -z $TOKEN_IDS_TOTAL_SUPPLY ] || [ -z $TOKEN_IDS_URL ]; then
-    echo "Usage: $ yes \"\" | bash $0 [Token Name] [Token IDs names: ] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]";
-    echo "e.g., $ yes \"\" | bash $0 ABCToken 0,1 A,B 10**18,1 https://127.0.0.1/api/token";
+    echo "Usage: $ yes \"\" | bash $0 [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]";
+    echo "e.g., $ yes \"\" | bash $0 ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token";
     exit
 fi
 #if [ -z $TOKEN_NAME ] || [ -z $TOKEN_SYMBOL ] || [ -z $TOKEN_DECIMALS ] || [ -z $TOKEN_TOTAL_SUPPLY ]; then
