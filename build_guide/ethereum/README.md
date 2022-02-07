@@ -40,7 +40,7 @@ $ yes "" | sh ./new_token.sh [Token Name] [Token Symbol] [Token Decimals] [Token
 e.g., yes "" | sh new_token.sh ABCToken ABC 18 10000
 
 ERC-1155
-$ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: ] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]
-e.g., $ yes "" | bash new_token_erc1155.sh ABCToken 0,1 A,B 10**18,1 https://127.0.0.1/api/token
+$ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]
+e.g., $ yes "" | bash new_token_erc1155.sh ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token
 ```
 
