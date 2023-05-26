@@ -1,0 +1,28 @@
+
+
+// Source:
+// - https://ethereum.stackexchange.com/questions/9072/canceling-overwriting-a-pending-transaction-using-geth-json-rpc
+
+// >>> Send a transaction to yourself with the same nonce and 10% (at least) higher gas value.
+// gas price (https://etherscan.io/gastracker)
+
+// cancel pending transaction
+// <account>: Use "from address" in pending transaction
+// <nonce>: Use "nonce" in pending transaction
+//
+> personal.unlockAccount("<account: from address in pending transaction>")
+> eth.sendTransaction({
+from: "<account: 'from' address in pending transaction>",
+to: "<account: 'from' address in pending transaction>",
+value: 0,
+gas: 21000,
+gasPrice: web3.toWei(100,"gwei"),
+nonce: <'nonce' in pending transaction>
+})
+
+"Error: replacement transaction underpriced"
+-> checks gas price
+
+
+> eth.sendTransaction({from: "<'from' account>", to: "<'from' account>", value: 0, gas: 21000, gasPrice: web3.toWei(100,"gwei"), nonce: <'nonce'>})
+
