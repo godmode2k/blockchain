@@ -14,7 +14,159 @@ Environment
     GNU/Linux: Ubuntu 16.04_x64 LTS, 20.04_x64 LTS
 
 
-Ethereum (ETH)
+
+Ethereum (ETH) (updated, 2024.07.25)
+----------
+    https://github.com/ethereum/
+    https://github.com/ethereum/go-ethereum/releases
+
+```sh
+You can also use Dockerfile (ethereum/Dockerfile_ethereum)
+
+Node1, Node2, Node3: run with different ports on one host
+
+
+$ mkdir /work && cd /work
+
+
+1. download prebuilt geth (for Ubuntu 22.04)
+USE old version for PoW
+PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+$ wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+$ tar xzvf geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+$ ln -s geth-alltools-linux-amd64-1.11.6-ea9e62ca/geth .
+
+PoS: geth-1.14.7 (latest)
+$ wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz
+$ tar xzvf geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz
+$ ln -s geth-alltools-linux-amd64-1.14.7-aa55f5ea/geth .
+
+
+$ mkdir sync_data_node1
+$ mkdir sync_data_node2
+$ mkdir sync_data_node3
+
+
+2. Creates new account
+$ ./geth account new --datadir /work/sync_data_node1
+...
+Public address of the key:   0xF8Dbf2cAF2e112278e7338589aa0eD0bA12f2Acb
+...
+$ ./geth account new --datadir /work/sync_data_node2
+...
+Public address of the key:   0x...
+...
+$ echo "password" >> passwd_node1.txt
+$ echo "password" >> passwd_node2.txt
+
+
+3. genesis.json
+Geth v1.14.0 drops support for running pre-merge networks
+
+SEE: https://github.com/ethereum/go-ethereum/releases/tag/v1.14.0
+Post-merge networks must be marked so with the terminalTotalDifficultyPassed: true field in their genesis.json.
+
+USE old version for PoW
+PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+ - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+PoS: geth-1.14.7 (latest)
+
+ADD:
+ - //"terminalTotalDifficultyPassed": true
+ - account with pre-fund: "0xF8Dbf2cAF2e112278e7338589aa0eD0bA12f2Acb": { "balance": "1000000000000000000" }
+
+genesis.json for PoW
+{
+    "config": {
+        "chainId": 11112,
+        "homesteadBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "istanbulBlock": 0,
+        "berlinBlock": 0,
+        "londonBlock": 0
+    },
+    "alloc": {
+        "0xF8Dbf2cAF2e112278e7338589aa0eD0bA12f2Acb": { "balance": "1000000000000000000" }
+    },
+    "coinbase": "0x0000000000000000000000000000000000000000",
+    "difficulty": "0x10",
+    "extraData": "",
+    "gasLimit": "0x8000000",
+    "nonce": "0x0000000000000033",
+    "mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "timestamp": "0x0"
+}
+
+
+4. Init
+$ ./geth init --datadir /work/sync_data_node1 genesis.json
+$ ./geth init --datadir /work/sync_data_node2 genesis.json
+$ ./geth init --datadir /work/sync_data_node3 genesis.json
+
+
+5. Run Nodes (for get enode info)
+$ ./geth --networkid 11112 --http.port 8544 --datadir /work/sync_data_node1 --port 30304 --authrpc.port 8551
+...
+"enode://82f19ec5f9...@127.0.0.1:30304?discport=0"
+...
+^c
+
+$ ./geth --networkid 11112 --http.port 8545 --datadir /work/sync_data_node2 --port 30305 --authrpc.port 8552
+...
+"enode://0c55842893...@127.0.0.1:30305?discport=0",
+...
+^c
+
+$ ./geth --networkid 11112 --http.port 8546 --datadir /work/sync_data_node3 --port 30306 --authrpc.port 8553
+...
+"enode://b364418cf4...@127.0.0.1:30306?discport=0"
+...
+^c
+
+
+6. static-nodes.json (Node1, Node2, Node3: run with different ports on one host)
+$ cat static-nodes.json
+[
+"enode://82f19ec5f9...@127.0.0.1:30304?discport=0",
+"enode://0c55842893...@127.0.0.1:30305?discport=0",
+"enode://b364418cf4...@127.0.0.1:30306?discport=0"
+]
+$ cp static-nodes.json /work/sync_data_node1
+$ cp static-nodes.json /work/sync_data_node2
+$ cp static-nodes.json /work/sync_data_node3
+
+
+7. Run all nodes
+$ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /work/sync_data_node1 \
+ --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8551 --syncmode "snap" --cache 4096 \
+ --allow-insecure-unlock --rpc.allow-unprotected-txs \
+ --unlock <ACCOUNT: 0x...> --password passwd_node1.txt --mine --miner.etherbase=<ACCOUNT: 0x...>
+
+$ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8545 --http.corsdomain "*" --datadir /work/sync_data_node2 \
+ --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8552 --syncmode "snap" --cache 4096 \
+ --allow-insecure-unlock --rpc.allow-unprotected-txs \
+ --unlock <ACCOUNT: 0x...> --password passwd_node2.txt --mine --miner.etherbase=<ACCOUNT: 0x...>
+
+$ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8546 --http.corsdomain "*" --datadir /work/sync_data_node3 \
+ --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8553 --syncmode "snap" --cache 4096 \
+ --allow-insecure-unlock --rpc.allow-unprotected-txs
+
+
+// Miner
+$ ./geth attach http://localhost:8544
+> miner.start(1)
+> miner.stop()
+```
+
+
+
+Ethereum (ETH) (old)
 ----------
     https://github.com/ethereum/
     https://github.com/ethereum/go-ethereum/releases

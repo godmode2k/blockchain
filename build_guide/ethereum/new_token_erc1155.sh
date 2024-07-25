@@ -56,6 +56,104 @@
 # 3. run
 #     $ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]
 #     e.g., $ yes "" | bash new_token_erc1155.sh ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token
+#
+# -----------------------------------------------------------------
+#
+# 4. 2024.07.25 updates
+#
+# USE:
+#  - Node.js: Node v20.15.0 (https://nodejs.org/dist/v20.15.0/node-v20.15.0-linux-x64.tar.xz)
+#  - Truffle (v5.11.5): $ npm install -g truffle
+#  - Ethereum nodes: at least 2 nodes
+#    USE old version for PoW
+#    PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+#     - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+#    PoS: geth-1.14.7 (latest)
+#     - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz
+#
+# ---------------------------------------
+# Error
+# ---------------------------------------
+# > Something went wrong while attempting to connect to the network at undefined. Check your network configuration.
+# Error: Web3ProviderEngine does not support synchronous requests.
+#     at Web3ProviderEngine.send (/eth_erc20/tokens/ABCToken/node_modules/web3-provider-engine/index.js:54:9)
+#     ...
+# ---------------------------------------
+# FIX:
+# ---------------------------------------
+# file: ./node_modules/truffle-wallet-provider/index.js
+#
+# add: comment-out and add
+#  - before: return this.engine.send.apply(this.engine, arguments);
+#  - after: //return this.engine.send.apply(this.engine, arguments);
+#           this.engine.sendAsync.apply(this.engine, arguments);
+#
+# ---------------------------------------
+# Error
+# ---------------------------------------
+# Served eth_sendRawTransaction ...
+# err="only replay-protected (EIP-155) transactions allowed over RPC"
+# ---------------------------------------
+# FIX:
+# ---------------------------------------
+# $ geth ... --rpc.allow-unprotected-txs
+#
+# ---------------------------------------
+# Error
+# ---------------------------------------
+# Served eth_call ...
+# err="invalid argument 0: json: cannot unmarshal hex number with leading zero digits into Go struct field TransactionArgs.gas of type hexutil.Uint64"
+# ---------------------------------------
+# FIX:
+# ---------------------------------------
+# Reference: https://ethereum.stackexchange.com/questions/154082/got-invalid-opcode-when-deploying-a-contract-to-ganache-test-network-from-truf
+# This is because solidity 0.8.20 introduces the PUSH0(0x5f) opcode which is only supported on ETH mainnet and 
+# not on any other chains. That's why other chains can't find the PUSH0(0x5f) opcode and throw this error.
+# Consider using 0.8.19 for other chains.
+#
+# Reference: https://www.decipherclub.com/push0-opcode/
+# PUSH0 opcode: A significant update in the latest solidity version 0.8.20
+#
+#
+# // for solodity 0.8.19
+# $ npm install @openzeppelin/contracts@4.9.6
+#
+# file: truffle-config.js
+# module.exports = { compilers: { solc: { version: "0.8.19", } }, ...
+#
+#
+#
+# // private-key
+# $ cat get_privkey.js
+# // $ npm install web3
+# // $ npm install truffle-wallet-provider
+#
+# // export private-key from keystore file
+# //const Web3 = require("web3");
+# const { Web3 } = require("web3");
+# const web3 = new Web3();
+# const WalletProvider = require("truffle-wallet-provider");
+# const Wallet = require('ethereumjs-wallet');
+# //const thirdparty = require('ethereumjs-wallet/thirdparty');
+# //
+# // ethereum keystore file
+# const _input = '{"address": ...,"version":3}';
+# const _password = "<passphrase>";
+# //
+# const mywallet = Wallet.fromV3(_input, _password);
+# const privatekey = mywallet.getPrivateKey();
+# //
+# console.log( "private key = %j", mywallet.getPrivateKey() );
+# console.log( "(USE THIS) private key = " + privatekey.toString("hex") ); // USE THIS
+#
+# $ npm install web3
+# $ npm install truffle-wallet-provider
+# $ node get_privkey.js
+#
+#
+# // run
+# $ yes "" | bash new_token_erc1155.sh [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL] [Network] [Network-Id]
+# e.g., $ yes "" | bash new_token_erc1155.sh ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token privatenet 11112
 # -----------------------------------------------------------------
 #
 
@@ -68,10 +166,20 @@ TOKEN_IDS_NAMES=$2
 TOKEN_IDS=$3
 TOKEN_IDS_TOTAL_SUPPLY=$4
 TOKEN_IDS_URL=$5
+NETWORK=$6
+NETWORK_ID=$7
 
-if [ -z $TOKEN_NAME ] || [ -z $TOKEN_IDS_NAMES ] || [ -z $TOKEN_IDS ] || [ -z $TOKEN_IDS_TOTAL_SUPPLY ] || [ -z $TOKEN_IDS_URL ]; then
-    echo "Usage: $ yes \"\" | bash $0 [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL]";
-    echo "e.g., $ yes \"\" | bash $0 ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token";
+
+if [ -z $TOKEN_NAME ] || [ -z $TOKEN_IDS_NAMES ] || [ -z $TOKEN_IDS ] || [ -z $TOKEN_IDS_TOTAL_SUPPLY ] || [ -z $TOKEN_IDS_URL ] \
+    || [ -z $NETWORK ] || [ -z $NETWORK_ID ]; then
+    echo "Usage: $ yes \"\" | bash $0 [Token Name] [Token IDs names: A,B] [Token IDs: 0,1] [Token IDs Total Supply: 10**18,1] [Token IDs URL] [Network] [Network-Id]"
+    echo "--------------------------------------------------------------------------"
+    echo "NOTE (internal): { \$OWNER_PRIVATE_KEY_*, \$NODE_HOST_*" }
+    echo
+    echo "Network: { privatenet, mainnet }"
+    echo
+    echo "e.g.,\n$ yes \"\" | bash $0 ABCToken A,B 0,1 10**18,1 https://127.0.0.1/api/token privatenet 11112"
+    echo "--------------------------------------------------------------------------"
     exit
 fi
 #if [ -z $TOKEN_NAME ] || [ -z $TOKEN_SYMBOL ] || [ -z $TOKEN_DECIMALS ] || [ -z $TOKEN_TOTAL_SUPPLY ]; then
@@ -142,9 +250,10 @@ _TOKEN_IDS_URL_VAR='constructor() public ERC1155("'$TOKEN_IDS_URL'/{id}.json")'
 #TOKEN_SYMBOL="TTA"
 #TOKEN_DECIMALS="18"
 #TOKEN_TOTAL_SUPPLY="1000000"
-OWNER_PRIVATE_KEY="7158d312bd2fa38c4de3da43f7bc107bf116117685f43ddcb597a9310b3ca5b8"
-#NODE_HOST="http://localhost:8545/"
-NODE_HOST="http://localhost:8544/"
+OWNER_PRIVATE_KEY_MAINNET="2121283ab608aaa1a447c83751533087157208cf1d0a15a9cb0fbecab919c64d"
+OWNER_PRIVATE_KEY_PRIVATENET="2121283ab608aaa1a447c83751533087157208cf1d0a15a9cb0fbecab919c64d"
+NODE_HOST_MAINNET="http://localhost:8545/"
+NODE_HOST_PRIVATENET="http://localhost:8544/"
 WORK_DIR="/eth_erc1155"
 TOKEN_DIR="tokens/$TOKEN_NAME"
 
@@ -191,7 +300,13 @@ truffle init --yes &&
 npm init &&
 #npm install zeppelin-solidity &&
 #npm install openzeppelin-solidity &&
-npm install @openzeppelin/contracts &&
+#
+# latest
+#npm install @openzeppelin/contracts &&
+#
+# for solodity 0.8.19
+npm install @openzeppelin/contracts@4.9.6 &&
+#npm install @openzeppelin/contracts@4.8.0 &&
 
 npm install --unsafe-perm=true --allow-root truffle-wallet-provider ethereumjs-wallet@0.6.4 &&
 npm install --unsafe-perm=true --allow-root web3 &&
@@ -310,7 +425,11 @@ EOF
 
 echo ">>> truffle.js"
 cat << EOF >> truffle.js &&
-const Web3 = require("web3");
+// $ npm install web3
+// $ npm install truffle-wallet-provider
+
+//const Web3 = require("web3");
+const { Web3 } = require("web3");
 const web3 = new Web3();
 const WalletProvider = require("truffle-wallet-provider");
 const Wallet = require('ethereumjs-wallet');
@@ -318,7 +437,8 @@ const Wallet = require('ethereumjs-wallet');
 
 /*
 // get private-key from keystore file
-const Web3 = require("web3");
+//const Web3 = require("web3");
+const { Web3 } = require("web3");
 const web3 = new Web3();
 const WalletProvider = require("truffle-wallet-provider");
 const Wallet = require('ethereumjs-wallet');
@@ -333,25 +453,29 @@ const privatekey = mywallet.getPrivateKey();
 console.log( "private key = %j", mywallet.getPrivateKey() );
 console.log( "private key = " + privatekey.toString("hex") );
 */
-// local testnet (private network)
-//const LOCALTEST_PRIVATE_KEY = ""
-const LOCALTEST_PRIVATE_KEY = "$OWNER_PRIVATE_KEY"
-var localtest_privateKey = new Buffer(LOCALTEST_PRIVATE_KEY, "hex")
-var localtest_wallet = Wallet.fromPrivateKey(localtest_privateKey);
-var localtest_provider = new WalletProvider(localtest_wallet, "$NODE_HOST");
 
-/*
-const MAINNET_PRIVATE_KEY = ""
-var mainnet_privateKey = new Buffer(MAINNET_PRIVATE_KEY, "hex")
+
+// Private network
+const PRIVATENET_PRIVATE_KEY = "$OWNER_PRIVATE_KEY_PRIVATENET";
+var privatenet_privateKey = new Buffer(PRIVATENET_PRIVATE_KEY, "hex");
+var privatenet_wallet = Wallet.fromPrivateKey(privatenet_privateKey);
+var privatenet_provider = new WalletProvider(privatenet_wallet, "$NODE_HOST_PRIVATENET");
+
+
+// Mainnet
+const MAINNET_PRIVATE_KEY = "$OWNER_PRIVATE_KEY_MAINNET";
+var mainnet_privateKey = new Buffer(MAINNET_PRIVATE_KEY, "hex");
 var mainnet_wallet = Wallet.fromPrivateKey(mainnet_privateKey);
-var mainnet_provider = new WalletProvider(mainnet_wallet, "http://localhost:8545/");
-*/
+var mainnet_provider = new WalletProvider(mainnet_wallet, "$NODE_HOST_MAINNET");
+
 
 
 module.exports = {
     compilers: {
         solc: {
-        version: "0.8.2",
+        //version: "0.8.2",
+        //version: "0.8.20",
+        version: "0.8.19",
         }
     },
 
@@ -361,8 +485,8 @@ module.exports = {
             port: 8545,
             network_id: "*" // Match any network id
         },
-        localtest: {
-            provider: localtest_provider,
+        privatenet: {
+            provider: privatenet_provider,
             //from: "0x...",
             gas: 4600000,
 
@@ -373,23 +497,109 @@ module.exports = {
             gasPrice: web3.utils.toWei("20", "gwei"),
 
             //network_id: "*",
-            network_id: "1000998877",
-        }
-/*,
+            //network_id: "1000998877",
+            //network_id: "11112",
+            network_id: "$NETWORK_ID",
+        },
         mainnet: {
             provider: mainnet_provider,
             gas: 4600000,
-            gasPrice: web3.toWei("20", "gwei"),
+            gasPrice: web3.utils.toWei("20", "gwei"),
             network_id: "1",
         }
-*/
     }
 };
 EOF
 
 
+
+#
+# 2024.07.25 (truffle: v5.11.5)
+#
+# USE:
+#  - Node.js: Node v20.15.0 (https://nodejs.org/dist/v20.15.0/node-v20.15.0-linux-x64.tar.xz)
+#  - Truffle (v5.11.5): $ npm install -g truffle
+#  - Ethereum nodes: at least 2 nodes
+#
+#
+# ---------------------------------------
+# Error
+# ---------------------------------------
+# > Something went wrong while attempting to connect to the network at undefined. Check your network configuration.
+# Error: Web3ProviderEngine does not support synchronous requests.
+#     at Web3ProviderEngine.send (/eth_erc20/tokens/ABCToken/node_modules/web3-provider-engine/index.js:54:9)
+#     ...
+# ---------------------------------------
+# FIX:
+# ---------------------------------------
+# file: ./node_modules/truffle-wallet-provider/index.js
+#
+# add: comment-out and add
+#  - before: return this.engine.send.apply(this.engine, arguments);
+#  - after: //return this.engine.send.apply(this.engine, arguments);
+#           this.engine.sendAsync.apply(this.engine, arguments);
+#
+#sed -i -e 's/
+#return\ this.engine.send.apply(this.engine,\ arguments);
+#/\/\/&/' ./node_modules/truffle-wallet-provider/index.js
+sed -i -e 's/return\ this.engine.send.apply(this.engine,\ arguments);/\/\/&/' ./node_modules/truffle-wallet-provider/index.js
+#
+#
+# add: this.engine.sendAsync.apply(this.engine, arguments);
+#
+#sed -i -e '0,/
+#return\ this.engine.send.apply(this.engine,\ arguments);
+#/!b;//a\
+#\ \ this.engine.sendAsync.apply(this.engine,\ arguments);
+#' ./node_modules/truffle-wallet-provider/index.js
+sed -i -e '0,/return\ this.engine.send.apply(this.engine,\ arguments);/!b;//a\\ \ this.engine.sendAsync.apply(this.engine,\ arguments);' ./node_modules/truffle-wallet-provider/index.js
+#
+#
+#
+# ---------------------------------------
+# Error
+# ---------------------------------------
+# Served eth_sendRawTransaction ...
+# err="only replay-protected (EIP-155) transactions allowed over RPC"
+# ---------------------------------------
+# FIX:
+# ---------------------------------------
+# $ geth ... --rpc.allow-unprotected-txs
+#
+#
+#
+# ---------------------------------------
+# Error
+# ---------------------------------------
+# Served eth_call ...
+# err="invalid argument 0: json: cannot unmarshal hex number with leading zero digits into Go struct field TransactionArgs.gas of type hexutil.Uint64"
+# ---------------------------------------
+# FIX:
+# ---------------------------------------
+# Reference: https://ethereum.stackexchange.com/questions/154082/got-invalid-opcode-when-deploying-a-contract-to-ganache-test-network-from-truf
+# This is because solidity 0.8.20 introduces the PUSH0(0x5f) opcode which is only supported on ETH mainnet and 
+# not on any other chains. That's why other chains can't find the PUSH0(0x5f) opcode and throw this error.
+# Consider using 0.8.19 for other chains.
+#
+# Reference: https://www.decipherclub.com/push0-opcode/
+# PUSH0 opcode: A significant update in the latest solidity version 0.8.20
+#
+#
+# // for solodity 0.8.19
+# $ npm install @openzeppelin/contracts@4.9.6
+#
+# // for solodity > 0.8.19
+# $ npm install @openzeppelin/contracts
+#
+# file: truffle-config.js
+# module.exports = { compilers: { solc: { version: "0.8.19", } }, ...
+#
+
+
+
 mv truffle-config.js truffle-config.js.orig &&
 truffle compile &&
-truffle deploy --network localtest
+#truffle deploy --network privatenet
+truffle deploy --network $NETWORK
 
 echo "finished..."

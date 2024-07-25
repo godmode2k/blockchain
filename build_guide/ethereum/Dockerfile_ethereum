@@ -1,0 +1,491 @@
+# Dockerfile
+#
+# Ethereum
+#  - hjkim (godmode2k@hotmail.com), 2024.07.24
+#
+#
+# ----------------------------------------------
+# build
+# ----------------------------------------------
+# $ sudo docker image prune
+# $ sudo docker build -f Dockerfile_ethereum -t ethereum_test:1.0 .
+# $ sudo docker builder prune
+#
+# or
+#
+# $ sudo docker build -f Dockerfile_ethereum -t ethereum_test:1.0 . && sudo docker image prune && sudo docker builder prune
+#
+#
+# ----------------------------------------------
+# run
+# ----------------------------------------------
+# 8544:8544: http interface (default)
+# 30304:30304: node sync (default)
+# $ sudo docker run --rm -it -p 8544:8544 -p 30304:30304 -v /shared_geth:/work --name ethereum_test ethereum_test:1.0
+#
+#
+# ----------------------------------------------
+# NOTE
+# ----------------------------------------------
+# Node1, Node2, Node3: run with different ports on one host
+#
+#
+# $ mkdir /work && cd /work
+#
+#
+# 1. download prebuilt geth (for Ubuntu 22.04)
+# USE old version for PoW
+# PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+# $ wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+# $ tar xzvf geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+# $ ln -s geth-alltools-linux-amd64-1.11.6-ea9e62ca/geth .
+#
+# PoS: geth-1.14.7 (latest)
+# $ wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz
+# $ tar xzvf geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz
+# $ ln -s geth-alltools-linux-amd64-1.14.7-aa55f5ea/geth .
+#
+#
+# $ mkdir sync_data_node1
+# $ mkdir sync_data_node2
+# $ mkdir sync_data_node3
+#
+#
+# 2. Creates new account
+# $ ./geth account new --datadir /work/sync_data_node1
+# ...
+# Public address of the key:   0xF8Dbf2cAF2e112278e7338589aa0eD0bA12f2Acb
+# ...
+# $ ./geth account new --datadir /work/sync_data_node2
+# ...
+# Public address of the key:   0x...
+# ...
+# $ echo "password" >> passwd_node1.txt
+# $ echo "password" >> passwd_node2.txt
+#
+#
+# 3. genesis.json
+# Geth v1.14.0 drops support for running pre-merge networks
+#
+# SEE: https://github.com/ethereum/go-ethereum/releases/tag/v1.14.0
+# Post-merge networks must be marked so with the terminalTotalDifficultyPassed: true field in their genesis.json.
+#
+# USE old version for PoW
+# PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+#  - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+# PoS: geth-1.14.7 (latest)
+#
+# ADD:
+# - //"terminalTotalDifficultyPassed": true
+# - account with pre-fund: "0xF8Dbf2cAF2e112278e7338589aa0eD0bA12f2Acb": { "balance": "1000000000000000000" }
+#
+# genesis.json for PoW
+#{
+#    "config": {
+#        "chainId": 11112,
+#        "homesteadBlock": 0,
+#        "eip150Block": 0,
+#        "eip155Block": 0,
+#        "eip158Block": 0,
+#        "byzantiumBlock": 0,
+#        "constantinopleBlock": 0,
+#        "petersburgBlock": 0,
+#        "istanbulBlock": 0,
+#        "berlinBlock": 0,
+#        "londonBlock": 0
+#    },
+#    "alloc": {
+#        "0xF8Dbf2cAF2e112278e7338589aa0eD0bA12f2Acb": { "balance": "1000000000000000000" }
+#    },
+#    "coinbase": "0x0000000000000000000000000000000000000000",
+#    "difficulty": "0x10",
+#    "extraData": "",
+#    "gasLimit": "0x8000000",
+#    "nonce": "0x0000000000000033",
+#    "mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+#    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+#    "timestamp": "0x0"
+#}
+#
+#
+# 4. Init
+# $ ./geth init --datadir /work/sync_data_node1 genesis.json
+# $ ./geth init --datadir /work/sync_data_node2 genesis.json
+# $ ./geth init --datadir /work/sync_data_node3 genesis.json
+#
+#
+# 5. Run Nodes (for get enode info)
+# $ ./geth --networkid 11112 --http.port 8544 --datadir /work/sync_data_node1 --port 30304 --authrpc.port 8551
+# ...
+# "enode://82f19ec5f9...@127.0.0.1:30304?discport=0"
+# ...
+# ^c
+#
+# $ ./geth --networkid 11112 --http.port 8545 --datadir /work/sync_data_node2 --port 30305 --authrpc.port 8552
+# ...
+# "enode://0c55842893...@127.0.0.1:30305?discport=0",
+# ...
+# ^c
+#
+# $ ./geth --networkid 11112 --http.port 8546 --datadir /work/sync_data_node3 --port 30306 --authrpc.port 8553
+# ...
+#"enode://b364418cf4...@127.0.0.1:30306?discport=0"
+# ...
+# ^c
+#
+#
+# 6. static-nodes.json (Node1, Node2, Node3: run with different ports on one host)
+# $ cat static-nodes.json
+#[
+#"enode://82f19ec5f9...@127.0.0.1:30304?discport=0",
+#"enode://0c55842893...@127.0.0.1:30305?discport=0",
+#"enode://b364418cf4...@127.0.0.1:30306?discport=0"
+#]
+# $ cp static-nodes.json /work/sync_data_node1
+# $ cp static-nodes.json /work/sync_data_node2
+# $ cp static-nodes.json /work/sync_data_node3
+#
+#
+# 7. Run all nodes
+# $ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /work/sync_data_node1 \
+# --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8551 --syncmode "snap" --cache 4096 \
+# --allow-insecure-unlock --rpc.allow-unprotected-txs \
+# --unlock <ACCOUNT: 0x...> --password passwd_node1.txt --mine --miner.etherbase=<ACCOUNT: 0x...>
+#
+# $ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8545 --http.corsdomain "*" --datadir /work/sync_data_node2 \
+# --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8552 --syncmode "snap" --cache 4096 \
+# --allow-insecure-unlock --rpc.allow-unprotected-txs \
+# --unlock <ACCOUNT: 0x...> --password passwd_node2.txt --mine --miner.etherbase=<ACCOUNT: 0x...>
+#
+# $ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8546 --http.corsdomain "*" --datadir /work/sync_data_node3 \
+# --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8553 --syncmode "snap" --cache 4096 \
+# --allow-insecure-unlock --rpc.allow-unprotected-txs
+#
+
+
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+
+RUN apt-get clean && rm -fr /var/lib/apt/lists/* && apt-get update
+
+# ------------------------------------------
+# Tools
+# ------------------------------------------
+RUN apt-get install -y wget curl net-tools psmisc bzip2 xz-utils
+
+# Node.js
+RUN cd $HOME && wget https://nodejs.org/dist/v20.15.0/node-v20.15.0-linux-x64.tar.xz && \
+    tar xJvf node-v20.15.0-linux-x64.tar.xz && \
+    echo 'export PATH=$PATH:$HOME/node-v20.15.0-linux-x64/bin' >> $HOME/.profile && \
+    echo 'export PATH=$PATH:$HOME/node-v20.15.0-linux-x64/bin' >> $HOME/.bashrc
+
+
+# ------------------------------------------
+# go-ethereum: geth (prebuilt)
+# ------------------------------------------
+RUN mkdir /work
+#COPY ./geth-linux-amd64-1.14.7-aa55f5ea.tar.gz /work
+
+# PoS: geth-1.14.7 (latest)
+#  - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz
+#RUN cd /work && \
+#    wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz && \
+#    tar xzvf geth-alltools-linux-amd64-1.14.7-aa55f5ea.tar.gz && \
+#    ln -s geth-alltools-linux-amd64-1.14.7-aa55f5ea/geth .
+
+# PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+#  - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz
+RUN cd /work && \
+    wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz && \
+    tar xzvf geth-alltools-linux-amd64-1.11.6-ea9e62ca.tar.gz && \
+    ln -s geth-alltools-linux-amd64-1.11.6-ea9e62ca/geth .
+
+
+# ------------------------------------------
+# Node sync directory
+# ------------------------------------------
+RUN cd /work && \
+    mkdir sync_data_node1 && \
+    mkdir sync_data_node2 && \
+    mkdir sync_data_node3
+
+
+# ------------------------------------------
+# Creates new account
+# ------------------------------------------
+RUN cd /work && \
+    yes "1234" | ./geth account new --datadir /work/sync_data_node1 && \
+    echo "1234" >> /work/passwd_node1.txt
+RUN cd /work && \
+    yes "1234" | ./geth account new --datadir /work/sync_data_node2 && \
+    echo "1234" >> /work/passwd_node2.txt
+
+
+# ------------------------------------------
+# scripts
+# ------------------------------------------
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+nohup $GETH --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /work/sync_data_node1 --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8551 --syncmode "snap" --cache 4096 --allow-insecure-unlock >> nohup.out.node1 2>&1 & \n\
+' >> /work/run_init_geth_node1.sh
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+nohup $GETH --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8545 --http.corsdomain "*" --datadir /work/sync_data_node2 --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8552 --syncmode "snap" --cache 4096 --allow-insecure-unlock >> nohup.out.node2 2>&1 & \n\
+' >> /work/run_init_geth_node2.sh
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+nohup $GETH --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8546 --http.corsdomain "*" --datadir /work/sync_data_node3 --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8553 --syncmode "snap" --cache 4096 --allow-insecure-unlock >> nohup.out.node3 2>&1 & \n\
+' >> /work/run_init_geth_node3.sh
+
+# -----
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+NOW=`date +%F-%H-%M-%S` \n\
+ACCOUNT="0x'$(ls /work/sync_data_node1/keystore/UTC* | awk -F'--' '{print $3}')'" \n\
+UNLOCK="--unlock $ACCOUNT --password passwd_node1.txt --mine --miner.etherbase=$ACCOUNT" \n\
+nohup $GETH --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /work/sync_data_node1 --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8551 --syncmode "snap" --cache 4096 --allow-insecure-unlock --rpc.allow-unprotected-txs $UNLOCK >> nohup.out.node1.$NOW 2>&1 & \n\
+' >> /work/run_geth_node1.sh
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+NOW=`date +%F-%H-%M-%S` \n\
+#ACCOUNT="0x'$(ls /work/sync_data_node2/keystore/UTC* | awk -F'--' '{print $3}')'" \n\
+#UNLOCK="--unlock $ACCOUNT --password passwd_node2.txt --mine --miner.etherbase=$ACCOUNT" \n\
+UNLOCK="" \n\
+nohup $GETH --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8545 --http.corsdomain "*" --datadir /work/sync_data_node2 --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8552 --syncmode "snap" --cache 4096 --allow-insecure-unlock --rpc.allow-unprotected-txs $UNLOCK >> nohup.out.node2.$NOW 2>&1 & \n\
+' >> /work/run_geth_node2.sh
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+NOW=`date +%F-%H-%M-%S` \n\
+nohup $GETH --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8546 --http.corsdomain "*" --datadir /work/sync_data_node3 --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8553 --syncmode "snap" --cache 4096 --allow-insecure-unlock --rpc.allow-unprotected-txs >> nohup.out.node3.$NOW 2>&1 & \n\
+' >> /work/run_geth_node3.sh
+
+# -----
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+$GETH attach http://localhost:8544 \n\
+' >> /work/run_attach_node1.sh
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+$GETH attach http://localhost:8545 \n\
+' >> /work/run_attach_node2.sh
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+$GETH attach http://localhost:8546 \n\
+' >> /work/run_attach_node3.sh
+
+# -----
+
+RUN echo '#!/bin/sh \n\
+GETH=/work/geth \n\
+$GETH init --datadir /work/sync_data_node1 genesis.json \n\
+echo \n\
+$GETH init --datadir /work/sync_data_node2 genesis.json \n\
+echo \n\
+$GETH init --datadir /work/sync_data_node3 genesis.json \n\
+echo \n\
+' >> /work/run_init_node_all.sh
+
+
+RUN echo '#!/bin/sh \n\
+cd /work \n\
+# gets enode info: static-nodes.json (Node1, Node2, Node3: run with different ports on one host) \n\
+echo 'gets enode info...' \n\
+sh run_init_geth_node1.sh && echo 'node1: sleep in 2 seconds... [1/3]' && sleep 2 \n\
+sh run_init_geth_node2.sh && echo 'node2: sleep in 2 seconds... [2/3]' && sleep 2 \n\
+sh run_init_geth_node3.sh && echo 'node3: sleep in 2 seconds... [3/3]' && sleep 2 \n\
+\n\
+# static-nodes.json \n\
+echo 'creates static-nodes.json...' \n\
+sh run_init_static_nodes.sh \n\
+\n\
+# restart \n\
+echo 'restart...' \n\
+killall geth \n\
+killall geth \n\
+echo 'sleep in 2 seconds...' && sleep 2 \n\
+sh run_geth_node1.sh && sh run_geth_node2.sh && sh run_geth_node3.sh \n\
+' >> /work/run_init_enode_all.sh
+
+
+#echo $(cat /work/nohup.out.node1 | grep "self=" | awk -F'self=' '{print $2}')',' >> /work/static-nodes.json
+#echo $(cat /work/nohup.out.node2 | grep "self=" | awk -F'self=' '{print $2}')',' >> /work/static-nodes.json
+#echo $(cat /work/nohup.out.node3 | grep "self=" | awk -F'self=' '{print $2}')',' >> /work/static-nodes.json
+#
+RUN echo '#!/bin/sh \n\
+INPUT="/work/nohup.out.node" \n\
+OUTPUT="/work/static-nodes.json" \n\
+echo '' > $OUTPUT \n\
+echo "[" >> $OUTPUT \n\
+echo $(cat "$INPUT"1 | grep "self=" | awk -F"self=" "{print $2}")"," >> $OUTPUT \n\
+echo $(cat "$INPUT"2 | grep "self=" | awk -F"self=" "{print $2}")"," >> $OUTPUT \n\
+echo $(cat "$INPUT"3 | grep "self=" | awk -F"self=" "{print $2}")"," >> $OUTPUT \n\
+echo "]" >> $OUTPUT \n\
+' >> /work/run_init_static_nodes.sh
+
+
+# ------------------------------------------
+# genesis.json
+# ------------------------------------------
+# "terminalTotalDifficultyPassed": true
+#
+# genesis.json for PoW
+RUN cd /work && \
+echo '\
+{ \n\
+    "config": { \n\
+        "chainId": 11112, \n\
+        "homesteadBlock": 0, \n\
+        "eip150Block": 0, \n\
+        "eip155Block": 0, \n\
+        "eip158Block": 0, \n\
+        "byzantiumBlock": 0, \n\
+        "constantinopleBlock": 0, \n\
+        "petersburgBlock": 0, \n\
+        "istanbulBlock": 0, \n\
+        "berlinBlock": 0, \n\
+        "londonBlock": 0 \n\
+    }, \n\
+    "alloc": { \
+' >> genesis.json && \
+# '"0x...": { "balance": "1000000000000000000" }' >> genesis.json
+echo '\
+        "0x'$(ls /work/sync_data_node1/keystore/UTC* | awk -F'--' '{print $3}')'": { "balance": "1000000000000000000" } \
+' >> genesis.json && \
+echo '\
+    }, \n\
+    "coinbase": "0x0000000000000000000000000000000000000000", \n\
+    "difficulty": "0x10", \n\
+    "extraData": "", \n\
+    "gasLimit": "0x8000000", \n\
+    "nonce": "0x0000000000000033", \n\
+    "mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000", \n\
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000", \n\
+    "timestamp": "0x0" \n\
+} \n\
+' >> genesis.json
+
+
+# ------------------------------------------
+# Init
+# ------------------------------------------
+#RUN cd /work && \
+#    ./geth init --datadir /work/sync_data_node1 genesis.json && \
+#    ./geth init --datadir /work/sync_data_node2 genesis.json && \
+#    ./geth init --datadir /work/sync_data_node3 genesis.json
+RUN cd /work && \
+    sh run_init_node_all.sh
+
+
+# ------------------------------------------
+# Run Nodes (for gets enode info)
+# ------------------------------------------
+# static-nodes.json (Node1, Node2, Node3: run with different ports on one host)
+# SEE: ENTRYPOINT ...
+
+# pre-symlink
+#RUN cd /work && \
+#    cp static-nodes.json ./sync_data_node1 && \
+#    cp static-nodes.json ./sync_data_node2 && \
+#    cp static-nodes.json ./sync_data_node3
+RUN cd /work && \
+    ln -s /work/static-nodes.json /work/sync_data_node1/ && \
+    ln -s /work/static-nodes.json /work/sync_data_node2/ && \
+    ln -s /work/static-nodes.json /work/sync_data_node3/
+
+
+# ------------------------------------------
+# Run all nodes
+# ------------------------------------------
+# SEE: ENTRYPOINT
+
+
+# ------------------------------------------
+# Miner
+# ------------------------------------------
+# PoW: geth-1.11.6 (old: ~ 1.11.6(PoW), 1.12.0(PoS) ~)
+# $ ./geth attach http://localhost:8544
+# > miner.start(1)
+# > miner.stop()
+
+
+# ------------------------------------------
+# for ERC-20, ERC-1155
+# ------------------------------------------
+RUN mkdir /eth_erc20 /eth_erc1155
+RUN cd /work && \
+    export PATH=$PATH:$HOME/node-v20.15.0-linux-x64/bin && \
+    npm install -g truffle
+
+
+
+
+
+# ------------------------------------------
+# ENTRYPOINT
+# ------------------------------------------
+# run apache2, tomcat9 (without systemctl here)
+#ENTRYPOINT bash
+#ENTRYPOINT /usr/share/tomcat9/bin/startup.sh && service apache2 restart
+#ENTRYPOINT /usr/share/tomcat9/bin/startup.sh && service mysql restart && apachectl -D FOREGROUND
+#ENTRYPOINT /usr/share/tomcat9/bin/startup.sh && apachectl -D FOREGROUND
+#ENTRYPOINT service mysql restart && tail -f /dev/null
+#ENTRYPOINT tail -f /dev/null
+#
+# Tomcat9, MySQL(MariaDB), Apache2
+#ENTRYPOINT /usr/share/tomcat9/bin/startup.sh && service mysql restart && apachectl -D FOREGROUND
+#
+# MySQL(MariaDB), Apache2
+#ENTRYPOINT service mysql restart && apachectl -D FOREGROUND
+#
+# Ethereum
+#ENTRYPOINT cd /work && \
+#    # gets enode info: static-nodes.json (Node1, Node2, Node3: run with different ports on one host)
+#    echo 'gets enode info...' && \
+#    sh run_init_geth_node1.sh && \
+#    echo 'sleep in 2 seconds... [1/3]' && sleep 2 && \
+#    sh run_init_geth_node2.sh && \
+#    echo 'sleep in 2 seconds... [2/3]' && sleep 2 && \
+#    sh run_init_geth_node3.sh && \
+#    echo 'sleep in 2 seconds... [3/3]' && sleep 2 && \
+#    # static-nodes.json
+#    echo 'creates static-nodes.json' && \
+#    sh run_init_static_nodes.sh && \
+#    # restart
+#    echo 'restart...' && \
+#    killall geth && \
+#    rm -f nohup.out.node1 && \
+#    rm -f nohup.out.node2 && \
+#    rm -f nohup.out.node3 && \
+#    sh run_geth_node1.sh && \
+#    sh run_geth_node2.sh && \
+#    sh run_geth_node3.sh && \
+#    tail -f /dev/null
+#
+# Ethereum
+ENTRYPOINT cd /work && \
+    sh run_init_enode_all.sh && \
+    echo '----------' && \
+    echo 'Attach the nodes:' && \
+    echo '$ sh /work/run_attach_node1.sh (run_attach_node2.sh, run_attach_node3.sh)' && \
+    echo '----------' && \
+    echo 'coinbase: "0x'$(ls /work/sync_data_node1/keystore/UTC* | awk -F'--' '{print $3}')'": { "balance": "1000000000000000000" }' && \
+    echo 'coinbase: "0x'$(ls /work/sync_data_node2/keystore/UTC* | awk -F'--' '{print $3}')'": { "balance": "1000000000000000000" }' && \
+    echo 'passphrase: 1234' && \
+    tail -f /dev/null
+#
+# default
+#ENTRYPOINT tail -f /dev/null
+
+
+
