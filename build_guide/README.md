@@ -131,6 +131,8 @@ $ ./geth --networkid 11112 --http.port 8546 --datadir /work/sync_data_node3 --po
 
 
 6. static-nodes.json (Node1, Node2, Node3: run with different ports on one host)
+//! DEPRECATED
+/*
 $ cat static-nodes.json
 [
 "enode://82f19ec5f9...@127.0.0.1:30304?discport=0",
@@ -140,26 +142,45 @@ $ cat static-nodes.json
 $ cp static-nodes.json /work/sync_data_node1
 $ cp static-nodes.json /work/sync_data_node2
 $ cp static-nodes.json /work/sync_data_node3
+*/
+
+// Use 'dumpconfig' and '--config' instead.
+// dumpconfig
+$ ./geth --networkid 11112 --http.port 8544 --datadir /work/sync_data_node1 --port 30304 --authrpc.port 8551 dumpconfig > geth_config.toml
+
+// add peers
+$ vim geth_config.toml
+...
+StaticNodes = [
+"enode://82f19ec5f9...@127.0.0.1:30304?discport=0",
+"enode://0c55842893...@127.0.0.1:30305?discport=0",
+"enode://b364418cf4...@127.0.0.1:30306?discport=0"
+]
+...
 
 
-7. Run all nodes
+7. Run all nodes (with config)
 $ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8544 --http.corsdomain "*" --datadir /work/sync_data_node1 \
  --port 30304 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8551 --syncmode "snap" --cache 4096 \
  --allow-insecure-unlock --rpc.allow-unprotected-txs \
- --unlock <ACCOUNT: 0x...> --password passwd_node1.txt --mine --miner.etherbase=<ACCOUNT: 0x...>
+ --unlock <ACCOUNT: 0x...> --password passwd_node1.txt --mine --miner.etherbase=<ACCOUNT: 0x...> \
+ --config geth_config.toml
 
 $ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8545 --http.corsdomain "*" --datadir /work/sync_data_node2 \
  --port 30305 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8552 --syncmode "snap" --cache 4096 \
  --allow-insecure-unlock --rpc.allow-unprotected-txs \
- --unlock <ACCOUNT: 0x...> --password passwd_node2.txt --mine --miner.etherbase=<ACCOUNT: 0x...>
+ --unlock <ACCOUNT: 0x...> --password passwd_node2.txt --mine --miner.etherbase=<ACCOUNT: 0x...> \
+ --config geth_config.toml
 
 $ ./geth --networkid 11112 --nodiscover --http --http.addr 0.0.0.0 --http.port 8546 --http.corsdomain "*" --datadir /work/sync_data_node3 \
  --port 30306 --http.api "db,eth,net,web3,personal,txpool,miner,admin" --authrpc.port 8553 --syncmode "snap" --cache 4096 \
- --allow-insecure-unlock --rpc.allow-unprotected-txs
+ --allow-insecure-unlock --rpc.allow-unprotected-txs \
+ --config geth_config.toml
 
 
 // Miner
 $ ./geth attach http://localhost:8544
+> admin.peers
 > miner.start(1)
 > miner.stop()
 ```
