@@ -2,8 +2,13 @@
 
 SEE
 ----------
-> ERC-20: new_token_erc20.sh (old: erc20_deploy_tutorial.txt) and </br>
+> ERC-20: new_token_erc20.sh (old: erc20_deploy_tutorial.txt) </br>
 > ERC-1155: new_token_erc1155.sh (old: erc20_deploy_tutorial.txt)
+
+
+Ethereum Smart Contract Tools Guide
+----------
+[Ethereum Smart Contract Tools Guide](smart_contract_tools/README.md)
 
 
 Environment
