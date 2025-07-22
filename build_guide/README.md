@@ -15,7 +15,7 @@ Environment
 
 
 
-Ethereum (ETH) (updated, 2024.07.25)
+Ethereum (ETH) (updated, 2025.07.22)
 ----------
     https://github.com/ethereum/
     https://github.com/ethereum/go-ethereum/releases
@@ -183,6 +183,67 @@ $ ./geth attach http://localhost:8544
 > admin.peers
 > miner.start(1)
 > miner.stop()
+
+
+-------------------------------------------------------------
+Adds new node while running nodes
+-------------------------------------------------------------
+$ mkdir sync_data_node4
+$ ./geth init --datadir /work/sync_data_node4 genesis.json
+$ ./geth --networkid 11112 --http.port 8547 \
+    --datadir /work/sync_data_node4 --port 30307 --authrpc.port 8554
+... "enode://...@127.0.0.1:30306?discport=0" ...
+^c
+$ vim geth_config.toml
+...
+StaticNodes = [
+"enode://...@127.0.0.1:30304?discport=0",
+"enode://...@127.0.0.1:30305?discport=0",
+"enode://...@127.0.0.1:30306?discport=0",
+// new node
+"enode://...@127.0.0.1:30307?discport=0",
+]
+...
+$ ./geth --networkid 11112 \
+    --nodiscover \
+    --http --http.addr 0.0.0.0 --http.port 8547 --http.corsdomain "*" \
+    --datadir /work/sync_data_node4 --port 30307 \
+    --http.api "db,eth,net,web3,personal,txpool,miner,admin" \
+    --authrpc.port 8554 --syncmode "snap" --cache 4096 \
+    --allow-insecure-unlock \
+    --config geth_config.toml
+
+
+// Sync Error: syncing is not done
+
+...
+Block synchronisation started
+Syncing: chain download in progress      synced=99.xx%
+Syncing: chain download in progress      synced=99.xx%
+Syncing: chain download in progress      synced=99.xx%
+
+
+// Workaround
+
+$ ./geth removedb --datadir /work/sync_data_node4
+all "y"
+
+$ ./geth init --datadir /work/sync_data_node4 genesis.json
+
+// USE: --syncmode "full"
+$ ./geth --networkid 11112 \
+    --nodiscover \
+    --http --http.addr 0.0.0.0 --http.port 8547 --http.corsdomain "*" \
+    --datadir /work/sync_data_node4 --port 30307 \
+    --http.api "db,eth,net,web3,personal,txpool,miner,admin" \
+    --authrpc.port 8554 --syncmode "full" --cache 4096 \
+    --allow-insecure-unlock \
+    --config geth_config.toml
+
+...
+Imported new chain segment               number=...
+Imported new chain segment               number=...
+...
 ```
 
 
